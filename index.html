@@ -56,7 +56,7 @@
                      data-icon="gear" and class="ui-btn-right" are jQuery mobile specific -->
                 <a href="#front-page-menu" data-icon="menu" class="ui-btn-right" data-rel="popup" data-iconpos="notext" data-transition="slidedown">Menu</a>
             </div>
-            <div data-role="content">
+            <div data-role="content" id="input-search">
                 <!-- "Search box" with the list of results for the location that the user wants to go to. -->
                 <ul id="navigate-to-input" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Where do you want to go?"></ul>
             </div>
@@ -91,6 +91,10 @@
                       <h3>View live map</h3>
                       <p>Get a real-time overview of vehicle positions.</p>
                   </a></li>
+                  <li><a href="#front-page" id="qr-button">
+                  	  <h3>Scan QR-Code</h3>
+                  	  <p>Take a destination scanning a QR-Code.</p>
+				  </a></li>
                 </ul>
             </div>
         </div>
@@ -305,6 +309,10 @@
              provides real-time info for the public transportation -->
         <script src="static/js/realtime.js"></script>
         <script src="static/js/reach.js"></script>
+        <!-- Apache Cordova -->
+        <script src="cordova.js"></script>
+        <!-- Allow to read an address from a QR-Code -->
+        <script src="static/js/qrcode.js"></script>
         <!-- Load jQuery Mobile as last because init.js handles the jQuery Mobile mobileinit message. -->
         <script src="static/js/jquery.mobile-1.3.1.min.js"></script>
     </body>
