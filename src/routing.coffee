@@ -917,6 +917,8 @@ new DetailsControl({position: 'topright'}).addTo(map)
 
 L.control.attribution({position: 'bottomright'}).addTo(map)
 
+L.control.compass().addTo(map)
+
 # Starts continuos watching of the user location using Leaflet.js locate function:
 # http://leafletjs.com/reference.html#map-locate
 # Don't use geolocation with Testem as it can't cancel the confirmation dialog
