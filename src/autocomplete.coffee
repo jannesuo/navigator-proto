@@ -466,6 +466,28 @@ class HistoryCompleter extends Autocompleter
                 break
         callback args, pred_list
 
+class ContactCompleter extends Autocompleter
+    @DESCRIPTION = "Contact Addresses"
+    onSuccessContacts: (contactlist)->
+        if contactlist.length > 0
+            alert "Found John"
+        else
+            alert "Didn't Find John"
+    onErrorContacts: (contactError) ->
+        alert "Error Obtaining Contacts"
+    get_predictions: (query, callback, args) ->
+        if not query.length
+            return
+        pred_list = []
+        q = query.toLowerCase()
+        options = new ContactFindOptions()
+        options.filter = "John"
+        fields = ["displayName", "name"]
+        navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
+        callback args, pred_list
+
+
+
 supported_completers =
     poi_categories: new POICategoryCompleter
     geocoder: new GeocoderCompleter
@@ -473,6 +495,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
+    contacts: new ContactCompleter
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
