@@ -917,6 +917,7 @@ new DetailsControl({position: 'topright'}).addTo(map)
 
 L.control.attribution({position: 'bottomright'}).addTo(map)
 
+# Adds to the map the compass control defined in compass.coffee
 L.control.compass().addTo(map)
 
 # Starts continuos watching of the user location using Leaflet.js locate function:

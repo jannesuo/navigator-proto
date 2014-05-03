@@ -1,3 +1,6 @@
+# Adds a new leaflet control that shows a compass on the map
+# It is a simple div with class 'leaflet-control-compass' that
+# is rotated with css transofrmations according to device orientation.
 L.Control.Compass = L.Control.extend
   options:
     position : 'topleft',
@@ -20,6 +23,9 @@ L.Control.Compass = L.Control.extend
 
   onSuccess: (heading) ->
     degrees = 360 - heading.magneticHeading
+    
+    # FIXME: avoid 360deg rotation when moving from 360 to 0 (or the other way);
+    # at the moment it is patched removing temporarily the transition effect.
     delta = @_oldheading - degrees
     if L.DomUtil.TRANSFORM and L.DomUtil.TRANSITION
       @_container.style[L.DomUtil.TRANSITION] = ""
