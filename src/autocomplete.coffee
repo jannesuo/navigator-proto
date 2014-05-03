@@ -472,22 +472,22 @@ class HistoryCompleter extends Autocompleter
 class ContactCompleter extends Autocompleter
     @DESCRIPTION = "Contact Addresses"
     onSuccessContacts: (contacts)->
-        if contacts.length > 0
-            for names in contacts
-                for adds in names.addresses
-                    loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
-                    loc.street = adds.formatted
-                    if q != places.street for places in pred_list
-                        pred_list.push new LocationPrediction(loc)
+        for names in contacts
+            for adds in names.addresses
+                loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
+                loc.street = adds.formatted
+                if ContactCompleter::q != adds.formatted.toLowerCase()
+                    pred_list.push new LocationPrediction(loc)
     onErrorContacts: (contactError) ->
         alert "Error Obtaining Contacts"
     get_predictions: (query, callback, args) ->
         if not query.length
             return
         pred_list = []
-        q = query.toLowerCase()
+        ContactCompleter::q = query.toLowerCase()
         options = new ContactFindOptions()
-        options.filter = q
+        options.filter = ContactCompleter::q
+        options.multiple = true
         fields = ["displayName", "name", "addresses"]
         navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
         callback args, pred_list
