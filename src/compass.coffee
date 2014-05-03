@@ -1,10 +1,3 @@
-# TODO Remove this dummy module used to demo when not in cordova
-navigator.compass ?=
-  watchHeading: (s, f, o) ->
-    degrees = 0
-    setInterval (-> s(magneticHeading: (degrees += Math.floor((Math.random() - 1/2) * 360/10)))), o.frequency
-  clearWatch: (id) -> clearInterval(id)
-
 L.Control.Compass = L.Control.extend
   options:
     position : 'topleft',
@@ -12,12 +5,17 @@ L.Control.Compass = L.Control.extend
     frequency: 200
 
   onAdd: (map) ->
-    @_watchID = navigator.compass.watchHeading(
-      (heading) => @onSuccess heading
-      (error) => @onError error
-      frequency: @options.frequency
-    )
-    L.DomUtil.create 'div', (if @_unavailable then '' else 'leaflet-control-compass')
+    $(document).on "deviceready", =>
+      L.DomUtil.addClass @_container, 'leaflet-control-compass'
+      @_watchID = navigator.compass.watchHeading(
+        (heading) => @onSuccess heading
+        (error) => @onError error
+        frequency: @options.frequency
+      )
+    L.DomUtil.create 'div', ''
+
+  onRemove: (map) ->
+    navigator.compass.clearWatch @_watchID
 
   onSuccess: (heading) ->
     degrees = 360 - heading.magneticHeading
@@ -25,8 +23,6 @@ L.Control.Compass = L.Control.extend
       @_container.style[L.DomUtil.TRANSFORM] = " rotate(#{degrees}deg)"
 
   onError: (error) ->
-    navigator.compass.clearWatch @_watchID
-    if @_container then @removeFrom @_map
-    else @_unavailable = true
+    @removeFrom @_map
 
 L.control.compass = (options) -> new L.Control.Compass(options)
