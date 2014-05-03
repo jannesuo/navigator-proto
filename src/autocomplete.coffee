@@ -64,7 +64,8 @@ class Prediction
                 @location.fetch_details navigate_to_location, @location
             else
                 if @location.name.search("House") >= 0
-                    $input.val("#{@location.street}")
+                    $input.val("#{@location.home}")
+                    # This is using the existing type locations to input a person's house into the input field, without adding the space
                 else
                     $input.val("#{@location.street} ")
                 $input.focus()
@@ -473,15 +474,17 @@ class ContactCompleter extends Autocompleter
     @DESCRIPTION = "Contact Addresses"
     onSuccessContacts: (contacts)->
         for names in contacts
-            if names.addresses?
+            if names.addresses? # Checks if contact has an address or not
                 for adds in names.addresses
                     loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
-                    loc.street = adds.formatted
-                    if ContactCompleter::q != adds.formatted.toLowerCase()
+                    loc.home = adds.formatted
+                    if ContactCompleter::q != adds.formatted.toLowerCase() # Checks if the address in input field already matches the contact's address
+                        if ContactCompleter::pred_list.length >= 5
+                            break
                         ContactCompleter::pred_list.push new LocationPrediction(loc)
         ContactCompleter::callbacklater()
     onErrorContacts: (contactError) ->
-        alert "Error Obtaining Contacts"
+        console.log "Error Obtaining Contacts"
     get_predictions: (query, callback, args) ->
         if not query.length
             return
@@ -489,11 +492,13 @@ class ContactCompleter extends Autocompleter
         ContactCompleter::q = query.toLowerCase()
         ContactCompleter::callbacklater = ->
             callback args, ContactCompleter::pred_list
+        # These properties are added to the prototype so that the onSuccessContacts can access them later
         options = new ContactFindOptions()
         options.filter = ContactCompleter::q
         options.multiple = true
         fields = ["displayName", "name", "addresses"]
         navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
+        # This uses the input to search for names and addresses and returns the results as contacts array in onSuccessContacts
 
 supported_completers =
     poi_categories: new POICategoryCompleter
@@ -502,7 +507,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
-    contacts: new ContactCompleter
+    contacts: new ContactCompleter #this is for mobile implementation to retrieve addresses from contacts
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
