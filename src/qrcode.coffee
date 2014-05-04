@@ -11,4 +11,3 @@ startScan = ->
 
 $(document).on "deviceready", ->
   $('#qr-button').on "click", startScan
-  

@@ -61,6 +61,7 @@ class Prediction
                 # Call fetch_details that by default does nothing but for GoogleLocation gets
                 # the location coordinates. The fetch_details function will call navigate_to_location
                 # function defined later in this file with the @location as a parameter.
+                $input.val("#{@location.name}")
                 @location.fetch_details navigate_to_location, @location
             else
                 if @location.name.search("House") >= 0
