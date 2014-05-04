@@ -5,14 +5,24 @@
 } = citynavi.config
 
 class Location
-    constructor: (@name, @coords) ->
+    constructor: (@name, @coords, @tag) ->
     fetch_details: (callback, args) ->
         # Do nothing by default.
         callback(args, @)
     to_json: ->
-        return {name: @name, coords: @coords}
+        return {name: @name, coords: @coords, tag: @tag}
     @from_json: (d) ->
-        return new Location d.name, d.coords
+        return new Location d.name, d.coords, d.tag
+
+# class Location
+#     constructor: (@name, @coords) ->
+#     fetch_details: (callback, args) ->
+#         # Do nothing by default.
+#         callback(args, @)
+#     to_json: ->
+#         return {name: @name, coords: @coords}
+#     @from_json: (d) ->
+#         return new Location d.name, d.coords
 
 window.Location = Location
 
@@ -88,7 +98,9 @@ class Prediction
             dest_page = "map-page"
         if @location?.icon?
             icon_html = "<img src='#{@location.icon}'>"
-        $el = $("<li><a href='##{dest_page}'>#{icon_html}#{name}</a></li>")
+            ##{dest_page}
+        # $el = $("<li data-icon='plus'><a href='#'>#{icon_html}#{name}</a><a href='#'>test</a></li>")
+        $el = $("<a href='#'>#{icon_html}#{name}</a>")
         $el.find('img').height(20).addClass('ui-li-icon')
         return $el
 
@@ -458,12 +470,17 @@ class HistoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         console.log "historycompleter"
         pred_list = []
+        # console.log location_history
+        # console.log location_history.history
         for location in location_history.history by -1
+            # console.log location
             if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
                 continue
             pred_list.push new LocationPrediction(location)
+            # console.log pred_list
             if pred_list.length >= 10
                 break
+        console.log pred_list
         callback args, pred_list
 
 supported_completers =
@@ -543,6 +560,7 @@ pred_list = []
 # FIXME seems that if there are POICategoryCompleter predictions then no other predictions are shown.
 render_autocomplete_results = (args, new_preds, error, completer) ->
     $ul = args.$ul # The list where the predictions are to be included in.
+    #console.log $ul
     $input = args.$input # The input element.
     if not completer?
         console.log "not completer?"
@@ -557,6 +575,8 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
     seen = {}
     seen_streets = {}
     seen_addresses = {}
+    tmp = []
+    #save = 
     for pred in pred_list
         if pred.location?.street
             key = pred.location.street
@@ -569,22 +589,47 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
                     continue
                 seen_addresses[key] = true
         key = pred.type + "|" + pred.location?.icon + "|" + pred.name
+        # if $.inArray(key,tmp) != -1
+        #     console.log "matched key"
+        #     continue
+        # tmp.push key
+        # console.log tmp
         if pred.rendered
             seen[key] = true
             continue
         if seen[key]
             console.log "#{key} already seen"
+            console.log $li_el
             continue
+
         seen[key] = true
         $el = pred.render() # render function of the Prediction object defined in this file
+        # if $.inArray(key,tmp) != -1
+        #     console.log "matched key"
+        #     $li_el = $("<li></li>")
+        # else
+        #     $li_el = $("<li data-icon='plus'></li>")
+        #     tmp.push key
+        $li_el = $("<li data-icon='plus'></li>")
+        $add_el = $("<a href='#add-address' data-rel='popup' data-position-to='window'>#{pred.name}</a>")
+        
         $el.data 'index', pred_list.indexOf(pred) # Store the index of the prediction to the element
         pred.rendered = true
+        console.log pred.name
+        # $add_el.click (e) ->
+        #     e.preventDefault()
+        #     alert "test"
         $el.click (e) -> # Bind event handler to the list item
             e.preventDefault()
             idx = $(this).data 'index'
             pred = pred_list[idx]
             pred.select($input, $ul) # select function of the Prediction object  defined in this file
-        $ul.append $el
+        # $ul.append $el
+        $li_el.append $el
+        $li_el.append $add_el
+        $ul.append $li_el
+        # console.log $ul
+
     $ul.listview "refresh"
     $ul.trigger "updatelayout"
 
@@ -608,3 +653,11 @@ $(document).on "listviewbeforefilter", "#navigate-to-input", (e, data) ->
         if event.keyCode == 13 # if enter is pressed
             if pred_list.length == 1 # if there's a unique prediction
                 pred_list[0].select $input, $ul # select it
+    $("#tag-click").click ->
+        console.log $("#fname").val()
+        # console.log pred.name
+        # pred.name = $("#fname").val()
+    
+
+
+
