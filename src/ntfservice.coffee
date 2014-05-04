@@ -14,7 +14,7 @@ window.ntf_srv_startService = () ->
     #window.ntf_srv_enableTimer()
 
 window.ntf_srv_enableTimer = () ->
-    window.ntf_srv.enableTimer( 60000,onSuccess = ((r)->),(e) -> 
+    window.ntf_srv.enableTimer( 10000,onSuccess = ((r)->),(e) -> 
         alert('An error has occurred in enableTimer.'+JSON.stringify(e))
     )
 
