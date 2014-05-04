@@ -4,6 +4,8 @@
     nominatim_url
 } = citynavi.config
 
+# Modify the Location class to support tag variable inside, so that user can add 
+# tag for the specific location address
 class Location
     constructor: (@name, @coords, @tag) ->
     fetch_details: (callback, args) ->
@@ -90,9 +92,11 @@ class Prediction
             dest_page = "map-page"
         if @location?.icon?
             icon_html = "<img src='#{@location.icon}'>"
+        # Wether a location object has a tag will provide different tag "a" icon (namely 
+        # + and -)
         if tag?
             $el = $("<a href='#'>#{icon_html}#{tag}:#{name}</a>")
-            $li_el = $("<li></li>")
+            $li_el = $("<li data-icon='minus'></li>")
             $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
         else    
             $el = $("<a href='#'>#{icon_html}#{name}</a>")
@@ -100,10 +104,9 @@ class Prediction
             $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
         $el.find('img').height(20).addClass('ui-li-icon')
         
+        # Modify the return by returning three html objects, since each object can bind with 
+        # different click event handler in the "render_autocomplete_results" class of this file
         return {"el":$el, "li_el":$li_el, "add_el":$add_el}
-    getPop:->
-        $pop = $("#add-address").get()
-        return $pop
 
 class LocationPrediction extends Prediction
     constructor: (loc) ->
@@ -482,7 +485,6 @@ class HistoryCompleter extends Autocompleter
             # console.log pred_list
             if pred_list.length >= 10
                 break
-        console.log pred_list
         callback args, pred_list
 
 supported_completers =
@@ -581,7 +583,6 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
     tmp = []
     #save = 
     for pred in pred_list
-        console.log pred.location
         if pred.location?.street
             key = pred.location.street
             if seen_streets[key] and not pred.location.number
@@ -595,7 +596,6 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
         key = pred.type + "|" + pred.location?.icon + "|" + pred.name
 
         if pred.rendered
-            pred.location.tag = "HOME"
             seen[key] = true
             continue
         if seen[key]
@@ -603,27 +603,51 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
             continue
 
         seen[key] = true
-        console.log pred.render()["el"]
-        $el = pred.render()["el"] # render function of the Prediction object defined in this file
-        $li_el = pred.render()["li_el"]
-        $add_el = pred.render()["add_el"]
+        tmp_render = pred.render() # get the return html objects of the prediction render method
+        $el = tmp_render["el"] # render function of the Prediction object defined in this file
+        $li_el = tmp_render["li_el"]
+        $add_el = tmp_render["add_el"]
 
         $el.data 'index', pred_list.indexOf(pred) # Store the index of the prediction to the element
+        $add_el.data 'index', pred_list.indexOf(pred) # Store the index of the prediction to the element
         pred.rendered = true
-        console.log pred.name
-        $add_el.click (e) ->
+        
+        $add_el.click (e) -> # Bind event handler to the icon item in the address list 
             e.preventDefault()
-            $('#add-address').popup('open'); 
-        $el.click (e) -> # Bind event handler to the list item
+            idx = $(this).data 'index'
+            pred = pred_list[idx]
+            if not pred.location.tag?
+                $("#tag-add").data 'pred', pred # Store the prediction to the button element
+                $('#fname').val('')
+                $('#add-address').popup('open'); 
+            else
+                $("#tag-delete").data 'pred', pred # Store the prediction to the button element
+                $('#delete-address').popup('open'); 
+        $el.click (e) -> # Bind event handler to the address item
             e.preventDefault()
             idx = $(this).data 'index'
             pred = pred_list[idx]
             pred.select($input, $ul) # select function of the Prediction object  defined in this file
-        # $ul.append $el
+
+        $('#tag-add').unbind('click').bind('click').click (e) -> #bind location tag add to the button
+            e.preventDefault()
+            pred = $(this).data 'pred'
+            if $('#fname').val()?
+                pred.location.tag = $('#fname').val()
+            
+            location_history.add pred.location
+            parent.history.back();
+
+        $('#tag-delete').unbind('click').bind('click').click (e) -> #bind location tag delete to the button
+            e.preventDefault()
+            pred = $(this).data 'pred'
+            pred.location.tag = null
+            parent.history.back();
+
+        # Append address "a" tag and icon "a" tag to the "li" tag
         $li_el.append $el
         $li_el.append $add_el
         $ul.append $li_el
-
     $ul.listview "refresh"
     $ul.trigger "updatelayout"
     

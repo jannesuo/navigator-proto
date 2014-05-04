@@ -95,11 +95,21 @@
             </div>
 
             <!-- add the popup in the frontpage -->
-            <div data-role="popup" id="add-address" class="ui-content">
+            <div data-role="popup" id="add-address" ata-icon="delete" data-iconpos="notext" class="ui-content">
                 <label id="label-name" for="fname">Input tag for this address</label>
                 <input type="text" name="fname" id="fname" placeholder="Input tag for this address">
-                <button id="tag-click">OK</button>
+                <button id="tag-add">OK</button>
+                <!-- <a href="#" id="tag-click" data-role="button">OK</a> -->
             </div>
+
+            <div data-role="popup" id="delete-address" class="ui-content">
+                <label id="label-name" for="fname">Are you sure to delete?</label>
+                <button id="tag-delete">OK</button>
+                <!-- <a href="#" id="tag-click" data-role="button">OK</a> -->
+            </div>
+
+
+
         </div>
         <!-- Map page -->
         <div id="map-page" data-role="page">
