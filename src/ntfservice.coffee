@@ -1,6 +1,6 @@
 # functions for communicating with backgroud notification service 
-# which is deployed by cordova plugin add https://github.com/phpsa/cbsp.git
-# src/android/MyService.java in the plugin packege needs to be edited into your own customized service
+# which is deployed by cordova plugin add https://github.com/linzhiqi/bgs-core.git 
+# the java code is already customized for this project
 
 window.ntf_srv_getStatus = () ->
     window.ntf_srv.getStatus( ((r) ->), (e) -> 
