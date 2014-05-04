@@ -14,15 +14,6 @@ class Location
     @from_json: (d) ->
         return new Location d.name, d.coords, d.tag
 
-# class Location
-#     constructor: (@name, @coords) ->
-#     fetch_details: (callback, args) ->
-#         # Do nothing by default.
-#         callback(args, @)
-#     to_json: ->
-#         return {name: @name, coords: @coords}
-#     @from_json: (d) ->
-#         return new Location d.name, d.coords
 
 window.Location = Location
 
@@ -90,6 +81,7 @@ class Prediction
     render: -> # create the list element
         icon_html = ''
         name = @name
+        tag = @tag
         if @type == "category" # Prediction is for a category
             dest_page = "select-nearest"
             icon_html = @category.get_icon_html()
@@ -98,17 +90,27 @@ class Prediction
             dest_page = "map-page"
         if @location?.icon?
             icon_html = "<img src='#{@location.icon}'>"
-            ##{dest_page}
-        # $el = $("<li data-icon='plus'><a href='#'>#{icon_html}#{name}</a><a href='#'>test</a></li>")
-        $el = $("<a href='#'>#{icon_html}#{name}</a>")
+        if tag?
+            $el = $("<a href='#'>#{icon_html}#{tag}:#{name}</a>")
+            $li_el = $("<li></li>")
+            $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
+        else    
+            $el = $("<a href='#'>#{icon_html}#{name}</a>")
+            $li_el = $("<li data-icon='plus'></li>")
+            $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
         $el.find('img').height(20).addClass('ui-li-icon')
-        return $el
+        
+        return {"el":$el, "li_el":$li_el, "add_el":$add_el}
+    getPop:->
+        $pop = $("#add-address").get()
+        return $pop
 
 class LocationPrediction extends Prediction
     constructor: (loc) ->
         @location = loc
         @type = "location"
         @name = loc.name
+        @tag = loc.tag
 
 class CategoryPrediction extends Prediction
     constructor: (cat) ->
@@ -512,6 +514,7 @@ navigate_to_location = (loc) ->
     citynavi.poi_list = []
     $.mobile.changePage page
 
+
 # Will show a map page where the POIs and the route to the closest POI
 # from the current location is shown. Also creates Location object of the
 # closest POI and stores the location to the location history.
@@ -578,6 +581,7 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
     tmp = []
     #save = 
     for pred in pred_list
+        console.log pred.location
         if pred.location?.street
             key = pred.location.street
             if seen_streets[key] and not pred.location.number
@@ -589,36 +593,27 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
                     continue
                 seen_addresses[key] = true
         key = pred.type + "|" + pred.location?.icon + "|" + pred.name
-        # if $.inArray(key,tmp) != -1
-        #     console.log "matched key"
-        #     continue
-        # tmp.push key
-        # console.log tmp
+
         if pred.rendered
+            pred.location.tag = "HOME"
             seen[key] = true
             continue
         if seen[key]
             console.log "#{key} already seen"
-            console.log $li_el
             continue
 
         seen[key] = true
-        $el = pred.render() # render function of the Prediction object defined in this file
-        # if $.inArray(key,tmp) != -1
-        #     console.log "matched key"
-        #     $li_el = $("<li></li>")
-        # else
-        #     $li_el = $("<li data-icon='plus'></li>")
-        #     tmp.push key
-        $li_el = $("<li data-icon='plus'></li>")
-        $add_el = $("<a href='#add-address' data-rel='popup' data-position-to='window'>#{pred.name}</a>")
-        
+        console.log pred.render()["el"]
+        $el = pred.render()["el"] # render function of the Prediction object defined in this file
+        $li_el = pred.render()["li_el"]
+        $add_el = pred.render()["add_el"]
+
         $el.data 'index', pred_list.indexOf(pred) # Store the index of the prediction to the element
         pred.rendered = true
         console.log pred.name
-        # $add_el.click (e) ->
-        #     e.preventDefault()
-        #     alert "test"
+        $add_el.click (e) ->
+            e.preventDefault()
+            $('#add-address').popup('open'); 
         $el.click (e) -> # Bind event handler to the list item
             e.preventDefault()
             idx = $(this).data 'index'
@@ -628,11 +623,10 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
         $li_el.append $el
         $li_el.append $add_el
         $ul.append $li_el
-        # console.log $ul
 
     $ul.listview "refresh"
     $ul.trigger "updatelayout"
-
+    
 # Event handler for the listview defined in the index.html with id "navigate-to-input"
 # The listview is the search box that shows the list of location suggestions when user types
 # where he wants to go.
@@ -653,10 +647,6 @@ $(document).on "listviewbeforefilter", "#navigate-to-input", (e, data) ->
         if event.keyCode == 13 # if enter is pressed
             if pred_list.length == 1 # if there's a unique prediction
                 pred_list[0].select $input, $ul # select it
-    $("#tag-click").click ->
-        console.log $("#fname").val()
-        # console.log pred.name
-        # pred.name = $("#fname").val()
     
 
 
