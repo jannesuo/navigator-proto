@@ -11,7 +11,7 @@ window.ntf_srv_startService = () ->
     window.ntf_srv.startService( onSuccess = ((r)->),(e) -> 
         alert('An error has occurred in startService.'+JSON.stringify(e))
     )
-    window.ntf_srv_enableTimer()
+    #window.ntf_srv_enableTimer()
 
 window.ntf_srv_enableTimer = () ->
     window.ntf_srv.enableTimer( 60000,onSuccess = ((r)->),(e) -> 
@@ -29,6 +29,6 @@ window.ntf_srv_setConfig = (itinerary) ->
 
 document.addEventListener('deviceready', () ->
     window.ntf_srv=cordova.require('com.red_folder.phonegap.plugin.backgroundservice.BackgroundService')
-    window.ntf_srv_getStatus()
+    #window.ntf_srv_getStatus()
     window.ntf_srv_startService()
 , true);
