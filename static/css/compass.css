@@ -1,0 +1,14 @@
+.leaflet-control-compass {
+	width: 32px;
+	height: 32px;
+	padding: 2px;
+}
+
+.leaflet-control-compass > div {
+	width: 32px;
+	height: 32px;
+	background-image: url(../images/compass.svg);
+	background-size: 100% 100%;
+	-webkit-transition: all 200ms ease-in-out;
+	transition: all 200ms ease-in-out;
+}

@@ -11,6 +11,7 @@
         <link type="text/css" rel="stylesheet" href="static/css/leaflet.label.css" />
         <link rel="stylesheet" href="static/css/main.css" />
         <link rel="stylesheet" href="static/css/leaflet.awesome-markers.css" />
+        <link rel="stylesheet" href="static/css/compass.css" />
         <style>
             /* Hide all the app pages until jQuery Mobile inits to
                avoid the Flash of Unstyled Content */
@@ -253,6 +254,7 @@
                 <h1>Live map</h1>
             </div>
         </div>
+        <script src="cordova.js"></script>
         <script src="static/js/jquery-1.8.3.min.js"></script>
         <script src="static/js/handlebars.min.js"></script>
         <script src="static/js/leaflet.js"></script>
@@ -298,6 +300,10 @@
         <!-- Palvelukartta is not currently used. It utilizes
              REST API for City of Helsinki Service Map -->
         <script src="static/js/palvelukartta.js"></script>
+        <!-- Compass control to show device orientation -->
+        <script src="static/js/compass.js"></script>
+        <!-- Marker rotated with css transform -->
+        <script src="static/js/rotatedmarker.js"></script>
         <!-- Handles routing and map drawing -->
         <script src="static/js/routing.js"></script>
         <!-- Handles autocompletion related tasks for the "Where do you want to go?"
@@ -309,8 +315,6 @@
              provides real-time info for the public transportation -->
         <script src="static/js/realtime.js"></script>
         <script src="static/js/reach.js"></script>
-        <!-- Apache Cordova -->
-        <script src="cordova.js"></script>
         <!-- Allow to read an address from a QR-Code -->
         <script src="static/js/qrcode.js"></script>
         <!-- Load jQuery Mobile as last because init.js handles the jQuery Mobile mobileinit message. -->
