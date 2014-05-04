@@ -132,7 +132,8 @@ $('#map-page').bind 'pageshow', (e, data) ->
         map.setView(position_point, zoom)
 
 
-$('#map-page [data-rel="back"]').on 'click', (e) -> reset_map()
+$('#map-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "front-page" then reset_map()
 
 reset_map = () ->
         if routeLayer?
@@ -177,12 +178,12 @@ $('#live-page').bind 'pageshow', (e, data) ->
         console.log "Got #{data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity.length} vehicles in #{citynavi.config.name}"
         sub = citynavi.realtime?.client.subscribe "/location/#{citynavi.config.id}/**", (msg) ->
             handle_vehicle_update false, msg
-        $('#live-page [data-rel="back"]').on 'click', (e) ->
-            sub.cancel()
+        $('#live-page').on 'pagebeforehide', (e, o) ->
+            if o.nextPage.attr('id') is "front-page" then sub.cancel()
 
 
-$('#live-page [data-rel="back"]').on 'click', (e) ->
-    reset_map()
+$('#live-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "front-page" then reset_map()
 
 ## Utilities
 
@@ -1201,23 +1202,24 @@ currentStep = null
 currentStepIndex = null
 speak_queue = []
 
-$('#navigation-page [data-rel="back"]').on 'click', (e) ->
-    if simulation_timeoutId?
-        clearTimeout simulation_timeoutId
-        simulation_timeoutId = null
-        citynavi.set_simulation_time null
-    if positionMarker?
-        map.removeLayer positionMarker
-        map.removeLayer positionMarker2
-        positionMarker = null
-        position_point = null
-        # XXX restore latest real geolocation
-        citynavi.set_source_location null
+$('#navigation-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "map-page"
+        if simulation_timeoutId?
+            clearTimeout simulation_timeoutId
+            simulation_timeoutId = null
+            citynavi.set_simulation_time null
+        if positionMarker?
+            map.removeLayer positionMarker
+            map.removeLayer positionMarker2
+            positionMarker = null
+            position_point = null
+            # XXX restore latest real geolocation
+            citynavi.set_source_location null
 
-    lastLeg = null
-    currentStep = null
-    currentStepIndex = null
-    speak_queue = []
+        lastLeg = null
+        currentStep = null
+        currentStepIndex = null
+        speak_queue = []
 
 $('#use-speech').change () ->
     if $('#use-speech').attr('checked')
