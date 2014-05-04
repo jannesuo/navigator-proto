@@ -9,7 +9,8 @@ L.Control.Compass = L.Control.extend
 
   onAdd: (map) ->
     $(document).on "deviceready", =>
-      L.DomUtil.addClass @_container, 'leaflet-control-compass'
+      L.DomUtil.addClass @_container, 'leaflet-control-layers leaflet-control-compass'
+      @_inner = L.DomUtil.create 'div', '', @_container
       @_oldheading = 0
       @_watchID = navigator.compass.watchHeading(
         (heading) => @onSuccess heading
@@ -28,10 +29,10 @@ L.Control.Compass = L.Control.extend
     # at the moment it is patched removing temporarily the transition effect.
     delta = @_oldheading - degrees
     if L.DomUtil.TRANSFORM and L.DomUtil.TRANSITION
-      @_container.style[L.DomUtil.TRANSITION] = ""
+      @_inner.style[L.DomUtil.TRANSITION] = ""
       if delta < -180 or delta > 180
-        @_container.style[L.DomUtil.TRANSITION] = "none"
-      @_container.style[L.DomUtil.TRANSFORM] = " rotate(#{degrees}deg)"
+        @_inner.style[L.DomUtil.TRANSITION] = "none"
+      @_inner.style[L.DomUtil.TRANSFORM] = " rotate(#{degrees}deg)"
       @_oldheading = degrees
 
   onError: (error) ->
