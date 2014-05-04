@@ -132,7 +132,8 @@ $('#map-page').bind 'pageshow', (e, data) ->
         map.setView(position_point, zoom)
 
 
-$('#map-page [data-rel="back"]').on 'click', (e) -> reset_map()
+$('#map-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "front-page" then reset_map()
 
 reset_map = () ->
         if routeLayer?
@@ -177,12 +178,12 @@ $('#live-page').bind 'pageshow', (e, data) ->
         console.log "Got #{data.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity.length} vehicles in #{citynavi.config.name}"
         sub = citynavi.realtime?.client.subscribe "/location/#{citynavi.config.id}/**", (msg) ->
             handle_vehicle_update false, msg
-        $('#live-page [data-rel="back"]').on 'click', (e) ->
-            sub.cancel()
+        $('#live-page').on 'pagebeforehide', (e, o) ->
+            if o.nextPage.attr('id') is "front-page" then sub.cancel()
 
 
-$('#live-page [data-rel="back"]').on 'click', (e) ->
-    reset_map()
+$('#live-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "front-page" then reset_map()
 
 ## Utilities
 
@@ -917,6 +918,9 @@ new DetailsControl({position: 'topright'}).addTo(map)
 
 L.control.attribution({position: 'bottomright'}).addTo(map)
 
+# Adds to the map the compass control defined in compass.coffee
+L.control.compass().addTo(map)
+
 # Starts continuos watching of the user location using Leaflet.js locate function:
 # http://leafletjs.com/reference.html#map-locate
 # Don't use geolocation with Testem as it can't cancel the confirmation dialog
@@ -1063,8 +1067,14 @@ map.on 'locationfound', (e) ->
     positionMarker = L.circle(point, radius, {color: 'red', weight: 1, opacity: 0.4}).addTo(map)
         .on 'click', (e) ->
             set_source_marker(point, {accuracy: radius, measure: measure})
-    # Draw position center as a fixed-size circle
-    positionMarker2 = L.circleMarker(point, {radius: 7, color: 'red', weight: 2, fillOpacity: 1, }).addTo(map)
+    # If heading direction available draws the arrow marker
+    # otherwise draws position center as a fixed-size circle
+    # TODO: filter to avoid sudden switch between those two markers
+    positionMarker2 = (
+      if e.heading? and not isNaN e.heading
+      then L.rotatedMarker point, angle: e.heading, icon: L.icon(iconUrl: 'static/images/arrow.svg', iconSize: [20, 20])
+      else L.circleMarker(point, {radius: 7, color: 'red', weight: 2, fillOpacity: 1})
+    ).addTo(map)
         .on 'click', (e) ->
             set_source_marker(point, {accuracy: radius, measure: measure})
 
@@ -1192,23 +1202,24 @@ currentStep = null
 currentStepIndex = null
 speak_queue = []
 
-$('#navigation-page [data-rel="back"]').on 'click', (e) ->
-    if simulation_timeoutId?
-        clearTimeout simulation_timeoutId
-        simulation_timeoutId = null
-        citynavi.set_simulation_time null
-    if positionMarker?
-        map.removeLayer positionMarker
-        map.removeLayer positionMarker2
-        positionMarker = null
-        position_point = null
-        # XXX restore latest real geolocation
-        citynavi.set_source_location null
+$('#navigation-page').on 'pagebeforehide', (e, o) ->
+    if o.nextPage.attr('id') is "map-page"
+        if simulation_timeoutId?
+            clearTimeout simulation_timeoutId
+            simulation_timeoutId = null
+            citynavi.set_simulation_time null
+        if positionMarker?
+            map.removeLayer positionMarker
+            map.removeLayer positionMarker2
+            positionMarker = null
+            position_point = null
+            # XXX restore latest real geolocation
+            citynavi.set_source_location null
 
-    lastLeg = null
-    currentStep = null
-    currentStepIndex = null
-    speak_queue = []
+        lastLeg = null
+        currentStep = null
+        currentStepIndex = null
+        speak_queue = []
 
 $('#use-speech').change () ->
     if $('#use-speech').attr('checked')

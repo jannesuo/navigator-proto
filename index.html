@@ -11,6 +11,7 @@
         <link type="text/css" rel="stylesheet" href="static/css/leaflet.label.css" />
         <link rel="stylesheet" href="static/css/main.css" />
         <link rel="stylesheet" href="static/css/leaflet.awesome-markers.css" />
+        <link rel="stylesheet" href="static/css/compass.css" />
         <style>
             /* Hide all the app pages until jQuery Mobile inits to
                avoid the Flash of Unstyled Content */
@@ -54,9 +55,9 @@
                 <h1>Navigator</h1>
                 <!-- Settings button.
                      data-icon="gear" and class="ui-btn-right" are jQuery mobile specific -->
-                <a href="#front-page-menu" data-icon="menu" class="ui-btn-right" data-rel="popup" data-iconpos="notext" data-transition="slidedown">Menu</a>
+                <a href="#front-page-menu" data-icon="menu" class="ui-btn-right physical-menu-btn" data-rel="popup" data-iconpos="notext" data-transition="slidedown">Menu</a>
             </div>
-            <div data-role="content">
+            <div data-role="content" id="input-search">
                 <!-- "Search box" with the list of results for the location that the user wants to go to. -->
                 <ul id="navigate-to-input" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Where do you want to go?"></ul>
             </div>
@@ -91,6 +92,10 @@
                       <h3>View live map</h3>
                       <p>Get a real-time overview of vehicle positions.</p>
                   </a></li>
+                  <li><a href="#front-page" id="qr-button">
+                  	  <h3>Scan QR-Code</h3>
+                  	  <p>Take a destination scanning a QR-Code.</p>
+				  </a></li>
                 </ul>
             </div>
 
@@ -116,7 +121,7 @@
             <div data-role="header" data-theme="b">
                 <a href="" data-rel="back">Back</a>
                 <h1 style="margin-bottom: 0; margin-top: 0"><a href="#navigation-page" data-icon="play" data-role="button" data-inline="true" style="margin-top: 3px; margin-bottom: 7px">Let's go</a></h1>
-                <a href="#map-page-menu" data-icon="menu" class="ui-btn-right" data-rel="popup" data-iconpos="notext" data-transition="slidedown" data-shadow="false" data-iconshadow="false">Menu</a>
+                <a href="#map-page-menu" data-icon="menu" class="ui-btn-right physical-menu-btn" data-rel="popup" data-iconpos="notext" data-transition="slidedown" data-shadow="false" data-iconshadow="false">Menu</a>
             </div>
             <div data-role="footer" data-position="fixed" style="padding: 0; margin: 0; border: 0; overflow: visible;">
                 <ul id="routes" class="route-list" style="display: block">
@@ -168,7 +173,7 @@
             <div data-role="header" data-theme="b" style="text-align: center">
                 <a href="" data-rel="back">Back</a>
                 <h1 style="margin-bottom: 0; margin-top: 0"><a data-icon="pause" data-role="button" class="pause-navigation-link" data-inline="true" style="margin-top: 3px; margin-bottom: 7px">Pause</a></h1>
-                <a href="#navigation-page-menu" data-icon="menu" class="ui-btn-right" data-rel="popup" data-iconpos="notext" data-transition="slidedown">Menu</a>
+                <a href="#navigation-page-menu" data-icon="menu" class="ui-btn-right physical-menu-btn" data-rel="popup" data-iconpos="notext" data-transition="slidedown">Menu</a>
             </div>
             <div data-role="footer" data-position="fixed" style="padding: 0; margin: 0; border: 0; overflow: visible;">
                 <ul class="route-list" style="display: block">
@@ -266,6 +271,7 @@
                 <h1>Live map</h1>
             </div>
         </div>
+        <script src="cordova.js"></script>
         <script src="static/js/jquery-1.8.3.min.js"></script>
         <script src="static/js/handlebars.min.js"></script>
         <script src="static/js/leaflet.js"></script>
@@ -311,6 +317,10 @@
         <!-- Palvelukartta is not currently used. It utilizes
              REST API for City of Helsinki Service Map -->
         <script src="static/js/palvelukartta.js"></script>
+        <!-- Compass control to show device orientation -->
+        <script src="static/js/compass.js"></script>
+        <!-- Marker rotated with css transform -->
+        <script src="static/js/rotatedmarker.js"></script>
         <!-- Handles routing and map drawing -->
         <script src="static/js/routing.js"></script>
         <!-- Handles autocompletion related tasks for the "Where do you want to go?"
@@ -322,7 +332,11 @@
              provides real-time info for the public transportation -->
         <script src="static/js/realtime.js"></script>
         <script src="static/js/reach.js"></script>
+        <!-- Allow to read an address from a QR-Code -->
+        <script src="static/js/qrcode.js"></script>
         <!-- Load jQuery Mobile as last because init.js handles the jQuery Mobile mobileinit message. -->
         <script src="static/js/jquery.mobile-1.3.1.min.js"></script>
+		<!-- Handles physical buttons (menu and back) of the phone-->
+        <script src="static/js/physicalbuttons.js"></script>
     </body>
 </html>
