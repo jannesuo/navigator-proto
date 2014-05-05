@@ -156,7 +156,7 @@ tampere =
             {type: "toilet"}
             {type: "recycling"}
         ]
-    autocompletion_providers: ["poi_categories", "history", "osm", "google"]
+    autocompletion_providers: ["poi_categories", "history", "osm", "google", "taghistory"]
 
 manchester =
     name: "Greater Manchester"
@@ -186,7 +186,7 @@ manchester =
             {type: "recycling"}
             {type: "toilet"}
         ]
-    autocompletion_providers: ["poi_categories", "history", "osm", "google"]
+    autocompletion_providers: ["poi_categories", "history", "osm", "google", "taghistory"]
 
 helsinki =
     name: "Helsinki Region"
@@ -217,7 +217,7 @@ helsinki =
             {type: "swimming_pool"}
             {type: "toilet"} # XXX is this what's available here?
         ]
-    autocompletion_providers: ["poi_categories", "history", "geocoder", "osm"]
+    autocompletion_providers: ["poi_categories", "history", "geocoder", "osm" , "taghistory"]
 
 nl =
     name: "Netherlands"
@@ -245,7 +245,7 @@ nl =
             {type: "toilet"}
             {type: "recycling"}
         ]
-    autocompletion_providers: ["poi_categories", "osm", "bag42", "google"]
+    autocompletion_providers: ["poi_categories", "osm", "bag42", "google", "taghistory"]
 
 
 # Save and set configuration.

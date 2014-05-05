@@ -45,6 +45,11 @@ class LocationHistory
     get: (id) ->
         return @history[id]
 
+    delete: (loc) ->
+        @array.splice @array.indexOf(loc.to_json()), 1
+        @history.splice @history.indexOf(loc), 1
+        localStorage[@ls_id] = JSON.stringify @array
+        
     clear: ->
         @array = []
         @history = []
@@ -460,6 +465,7 @@ class POICategoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         if not query.length
             return
+
         pred_list = []
         q = query.toLowerCase()
         for cat in citynavi.poi_categories
@@ -475,17 +481,44 @@ class HistoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         console.log "historycompleter"
         pred_list = []
-        # console.log location_history
         # console.log location_history.history
+
         for location in location_history.history by -1
             # console.log location
             if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
+                # if not location.tag?
                 continue
+            # if not location.tag?
+            #     if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
+            #         continue
             pred_list.push new LocationPrediction(location)
             # console.log pred_list
             if pred_list.length >= 10
                 break
         callback args, pred_list
+
+
+class TagHitoryCompleter extends Autocompleter
+    @DESCRIPTION = "Destination history"
+    get_predictions: (query, callback, args) ->
+        console.log "historycompleter"
+        pred_list = []
+        console.log location_history
+        # console.log location_history.history
+        for location in location_history.history by -1
+            # console.log location
+            if query.length and location.tag.toLowerCase().indexOf(query.toLowerCase()) != 0
+                # if not location.tag?
+                continue
+            # if not location.tag?
+            #     if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
+            #         continue
+            pred_list.push new LocationPrediction(location)
+            # console.log pred_list
+            if pred_list.length >= 10
+                break
+        callback args, pred_list
+
 
 supported_completers =
     poi_categories: new POICategoryCompleter
@@ -494,6 +527,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
+    taghistory: new TagHitoryCompleter
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
@@ -642,6 +676,7 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
             e.preventDefault()
             pred = $(this).data 'pred'
             pred.location.tag = null
+            location_history.delete pred.location
             parent.history.back();
 
         # Append address "a" tag and icon "a" tag to the "li" tag
