@@ -499,9 +499,10 @@ class TagHitoryCompleter extends Autocompleter
         pred_list = []
         console.log location_history
         for location in location_history.history by -1
+            if not location.tag?
+                continue
             if query.length and location.tag.toLowerCase().indexOf(query.toLowerCase()) != 0
                 continue
-
             pred_list.push new LocationPrediction(location)
             if pred_list.length >= 10
                 break
