@@ -511,31 +511,30 @@ class FavouritesCompleter extends Autocompleter
                 break
         callback args, pred_list
 
-class ContactCompleter extends Autocompleter
+class ContactCompleter extends RemoteAutocompleter
     @DESCRIPTION = "Contact Addresses"
     onSuccessContacts: (contacts) =>
+        loc_list = []
         for names in contacts
             if names.addresses? # Checks if contact has an address or not
                 for adds in names.addresses
-                    loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
+                    loc = new Location "#{names.name.formatted.slice(0,-1)}'s House", [null, null]
                     loc.home = adds.formatted
-                    if @q isnt adds.formatted.toLowerCase() # Checks if the address in input field already matches the contact's address
-                        if @pred_list.length >= 3
+                    if @query isnt adds.formatted.toLowerCase() # Checks if the address in input field already matches the contact's address
+                        if loc_list.length >= 3
                             break
-                        @pred_list.push new LocationPrediction(loc)
-        @callbacklater @pred_list
+                        loc_list.push loc
+        @submit_location_predictions loc_list
     onErrorContacts: (contactError) =>
-        console.log "Error Obtaining Contacts"
-    get_predictions: (query, callback, args) ->
-        if not query.length
+        @submit_prediction_failure "Error Obtaining Contacts"
+    fetch_results: ->
+        if not @query.length
             return
         @pred_list = []
-        @q = query.toLowerCase()
-        @callbacklater = (pred_list) ->
-            callback args, pred_list
+        @query = @query.toLowerCase()
         # These properties are added to the prototype so that the onSuccessContacts can access them later
         options = new ContactFindOptions()
-        options.filter = @q
+        options.filter = @query
         options.multiple = true
         fields = ["displayName", "name", "addresses"]
         navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
