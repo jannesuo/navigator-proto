@@ -64,9 +64,14 @@ class Prediction
                 # Call fetch_details that by default does nothing but for GoogleLocation gets
                 # the location coordinates. The fetch_details function will call navigate_to_location
                 # function defined later in this file with the @location as a parameter.
+                $input.data "selected_location", @location.name
                 @location.fetch_details navigate_to_location, @location
             else
-                $input.val("#{@location.street} ")
+                if @location.name.search("House") >= 0
+                    # This is using the existing type locations to input a person's house into the input field, without adding the space
+                    $input.val @location.home
+                else
+                    $input.val @location.street
                 $input.focus()
                 $input.trigger("keyup")
         else
@@ -487,6 +492,36 @@ class HistoryCompleter extends Autocompleter
                 break
         callback args, pred_list
 
+class ContactCompleter extends Autocompleter
+    @DESCRIPTION = "Contact Addresses"
+    onSuccessContacts: (contacts) =>
+        for names in contacts
+            if names.addresses? # Checks if contact has an address or not
+                for adds in names.addresses
+                    loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
+                    loc.home = adds.formatted
+                    if @q isnt adds.formatted.toLowerCase() # Checks if the address in input field already matches the contact's address
+                        if @pred_list.length >= 5
+                            break
+                        @pred_list.push new LocationPrediction(loc)
+        @callbacklater @pred_list
+    onErrorContacts: (contactError) =>
+        console.log "Error Obtaining Contacts"
+    get_predictions: (query, callback, args) ->
+        if not query.length
+            return
+        @pred_list = []
+        @q = query.toLowerCase()
+        @callbacklater = (pred_list) ->
+            callback args, pred_list
+        # These properties are added to the prototype so that the onSuccessContacts can access them later
+        options = new ContactFindOptions()
+        options.filter = @q
+        options.multiple = true
+        fields = ["displayName", "name", "addresses"]
+        navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
+        # This uses the input to search for names and addresses and returns the results as contacts array in onSuccessContacts
+
 supported_completers =
     poi_categories: new POICategoryCompleter
     geocoder: new GeocoderCompleter
@@ -494,6 +529,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
+    contacts: new ContactCompleter #this is for mobile implementation to retrieve addresses from contacts
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
@@ -671,7 +707,3 @@ $(document).on "listviewbeforefilter", "#navigate-to-input", (e, data) ->
         if event.keyCode == 13 # if enter is pressed
             if pred_list.length == 1 # if there's a unique prediction
                 pred_list[0].select $input, $ul # select it
-    
-
-
-

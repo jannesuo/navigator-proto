@@ -217,7 +217,7 @@ helsinki =
             {type: "swimming_pool"}
             {type: "toilet"} # XXX is this what's available here?
         ]
-    autocompletion_providers: ["poi_categories", "history", "geocoder", "osm"]
+    autocompletion_providers: ["poi_categories", "history", "contacts", "geocoder", "osm"]
 
 nl =
     name: "Netherlands"
