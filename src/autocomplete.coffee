@@ -109,7 +109,7 @@ class Prediction
             icon_html = "<img src='#{@location.icon}'>"
         # Wether a location object has a tag will provide different tag "a" icon (namely + and -)
         if tag?
-            $el = $("<a href='#'>#{icon_html}#{tag}:#{name}</a>")
+            $el = $("<a href='#'>#{icon_html}#{tag}: #{name}</a>")
             $li_el = $("<li data-icon='minus'></li>")
             $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
         else    
