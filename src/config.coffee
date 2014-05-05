@@ -218,6 +218,7 @@ helsinki =
             {type: "toilet"} # XXX is this what's available here?
         ]
     autocompletion_providers: ["poi_categories", "history", "geocoder", "osm" , "contacts", "favourites"]
+    speech_language: "fi-FI"
 
 nl =
     name: "Netherlands"
