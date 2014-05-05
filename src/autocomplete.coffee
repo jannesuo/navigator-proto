@@ -45,11 +45,11 @@ class LocationHistory
     get: (id) ->
         return @history[id]
 
-    delete: (loc) ->
+    delete: (loc) -> # Delete function for the locationhistory class to delete certain loc
         @array.splice @array.indexOf(loc.to_json()), 1
         @history.splice @history.indexOf(loc), 1
         localStorage[@ls_id] = JSON.stringify @array
-        
+
     clear: ->
         @array = []
         @history = []
@@ -100,7 +100,7 @@ class Prediction
         # Wether a location object has a tag will provide different tag "a" icon (namely 
         # + and -)
         if tag?
-            $el = $("<a href='#'>#{icon_html}#{tag}:#{name}</a>")
+            $el = $("<a href='#'>#{icon_html}#{tag}: #{name}</a>")
             $li_el = $("<li data-icon='minus'></li>")
             $add_el = $("<a href='#' data-rel='popup' data-position-to='window'>#{name}</a>")
         else    
@@ -481,40 +481,28 @@ class HistoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         console.log "historycompleter"
         pred_list = []
-        # console.log location_history.history
+        console.log location_history
 
         for location in location_history.history by -1
-            # console.log location
             if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
-                # if not location.tag?
                 continue
-            # if not location.tag?
-            #     if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
-            #         continue
             pred_list.push new LocationPrediction(location)
-            # console.log pred_list
             if pred_list.length >= 10
                 break
         callback args, pred_list
 
-
-class TagHitoryCompleter extends Autocompleter
-    @DESCRIPTION = "Destination history"
+## Autocompleter for the location address with tag
+class TagHitoryCompleter extends Autocompleter 
+    @DESCRIPTION = "Tag history"
     get_predictions: (query, callback, args) ->
-        console.log "historycompleter"
+        console.log "tagcompleter"
         pred_list = []
         console.log location_history
-        # console.log location_history.history
         for location in location_history.history by -1
-            # console.log location
             if query.length and location.tag.toLowerCase().indexOf(query.toLowerCase()) != 0
-                # if not location.tag?
                 continue
-            # if not location.tag?
-            #     if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
-            #         continue
+
             pred_list.push new LocationPrediction(location)
-            # console.log pred_list
             if pred_list.length >= 10
                 break
         callback args, pred_list
@@ -527,7 +515,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
-    taghistory: new TagHitoryCompleter
+    taghistory: new TagHitoryCompleter # add the taghistory in config.coffee
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
@@ -671,13 +659,17 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
             
             location_history.add pred.location
             parent.history.back();
+            # $ '#input-search input' 
+            # .trigger "keyup"
 
         $('#tag-delete').unbind('click').bind('click').click (e) -> #bind location tag delete to the button
             e.preventDefault()
             pred = $(this).data 'pred'
             pred.location.tag = null
-            location_history.delete pred.location
+            location_history.delete pred.location # call the delete once click the delete button
             parent.history.back();
+            # $ '#input-search input' 
+            # .trigger "keyup"
 
         # Append address "a" tag and icon "a" tag to the "li" tag
         $li_el.append $el
