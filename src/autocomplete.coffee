@@ -507,7 +507,7 @@ class FavouritesCompleter extends Autocompleter
             if query.length and location.tag.toLowerCase().indexOf(query.toLowerCase()) != 0
                 continue
             pred_list.push new LocationPrediction(location)
-            if pred_list.length >= 5
+            if pred_list.length >= 2
                 break
         callback args, pred_list
 
@@ -520,7 +520,7 @@ class ContactCompleter extends Autocompleter
                     loc = new Location "#{names.name.formatted.slice(0,names.name.formatted.length-1)}'s House", [null, null]
                     loc.home = adds.formatted
                     if @q isnt adds.formatted.toLowerCase() # Checks if the address in input field already matches the contact's address
-                        if @pred_list.length >= 5
+                        if @pred_list.length >= 3
                             break
                         @pred_list.push new LocationPrediction(loc)
         @callbacklater @pred_list
@@ -700,6 +700,7 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
             e.preventDefault()
             pred = $(this).data 'pred'
             pred.location.tag = null
+            pred.location.icon = null
             location_favourites.remove pred.location # call the delete once click the delete button
             parent.history.back();
             $ '#input-search input' 
