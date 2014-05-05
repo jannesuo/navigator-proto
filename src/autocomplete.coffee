@@ -45,6 +45,11 @@ class LocationHistory
     get: (id) ->
         return @history[id]
 
+    remove: (loc) -> # Delete function for the locationhistory class to delete certain loc
+        @array.splice @array.indexOf(loc.to_json()), 1
+        @history.splice @history.indexOf(loc), 1
+        localStorage[@ls_id] = JSON.stringify @array
+
     clear: ->
         @array = []
         @history = []
@@ -54,6 +59,7 @@ class LocationHistory
 # Locations are added to the history when user selects a location or POI
 # as a navigation target.
 window.location_history = new LocationHistory "city-navigator-history"
+window.location_favourites = new LocationHistory "city-navigator-favourites"
 
 class Prediction
     select: ($input, $ul) ->
@@ -95,10 +101,13 @@ class Prediction
             name = "Closest " + name.toLowerCase() # For example, "Closest library"
         else
             dest_page = "map-page"
+            
+        if tag?
+            @location.icon = 'static/images/star.svg'
+            
         if @location?.icon?
             icon_html = "<img src='#{@location.icon}'>"
-        # Wether a location object has a tag will provide different tag "a" icon (namely 
-        # + and -)
+        # Wether a location object has a tag will provide different tag "a" icon (namely + and -)
         if tag?
             $el = $("<a href='#'>#{icon_html}#{tag}:#{name}</a>")
             $li_el = $("<li data-icon='minus'></li>")
@@ -465,6 +474,7 @@ class POICategoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         if not query.length
             return
+
         pred_list = []
         q = query.toLowerCase()
         for cat in citynavi.poi_categories
@@ -480,15 +490,24 @@ class HistoryCompleter extends Autocompleter
     get_predictions: (query, callback, args) ->
         console.log "historycompleter"
         pred_list = []
-        # console.log location_history
-        # console.log location_history.history
         for location in location_history.history by -1
-            # console.log location
             if query.length and location.name.toLowerCase().indexOf(query.toLowerCase()) != 0
                 continue
             pred_list.push new LocationPrediction(location)
-            # console.log pred_list
             if pred_list.length >= 10
+                break
+        callback args, pred_list
+
+## Autocompleter for the location address with tag
+class FavouritesCompleter extends Autocompleter 
+    @DESCRIPTION = "Favourites"
+    get_predictions: (query, callback, args) ->
+        pred_list = []
+        for location in location_favourites.history by -1
+            if query.length and location.tag.toLowerCase().indexOf(query.toLowerCase()) != 0
+                continue
+            pred_list.push new LocationPrediction(location)
+            if pred_list.length >= 5
                 break
         callback args, pred_list
 
@@ -530,6 +549,7 @@ supported_completers =
     osm: new OSMCompleter
     history: new HistoryCompleter
     contacts: new ContactCompleter #this is for mobile implementation to retrieve addresses from contacts
+    favourites: new FavouritesCompleter # add the taghistory in config.coffee
 
 generate_area_completers = (area) ->
     (supported_completers[id] for id in area.autocompletion_providers)
@@ -671,14 +691,19 @@ render_autocomplete_results = (args, new_preds, error, completer) ->
             if $('#fname').val()?
                 pred.location.tag = $('#fname').val()
             
-            location_history.add pred.location
+            location_favourites.add pred.location
             parent.history.back();
+            $ '#input-search input' 
+                .trigger "keyup"
 
         $('#tag-delete').unbind('click').bind('click').click (e) -> #bind location tag delete to the button
             e.preventDefault()
             pred = $(this).data 'pred'
             pred.location.tag = null
+            location_favourites.remove pred.location # call the delete once click the delete button
             parent.history.back();
+            $ '#input-search input' 
+                .trigger "keyup"
 
         # Append address "a" tag and icon "a" tag to the "li" tag
         $li_el.append $el
