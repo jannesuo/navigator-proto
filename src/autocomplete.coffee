@@ -67,17 +67,18 @@ class Prediction
             coords = @location.coords
             if (not coords?) or (coords[0]? and coords[1]?)
                 $.mobile.showPageLoadingMsg()
+                # Saves the name of the location for future retrieval by the function that adds the address to a contact
+                $input.data "selected_location", @location.name
                 # Call fetch_details that by default does nothing but for GoogleLocation gets
                 # the location coordinates. The fetch_details function will call navigate_to_location
                 # function defined later in this file with the @location as a parameter.
-                $input.data "selected_location", @location.name
                 @location.fetch_details navigate_to_location, @location
             else
-                if @location.name.search("House") >= 0
-                    # This is using the existing type locations to input a person's house into the input field, without adding the space
+                if @location.home?
+                    # This is making use of the existing function to paste a person's house address into the input field, without adding the space
                     $input.val @location.home
                 else
-                    $input.val @location.street
+                    $input.val("#{@location.street} ")
                 $input.focus()
                 $input.trigger("keyup")
         else
@@ -511,6 +512,7 @@ class FavouritesCompleter extends Autocompleter
                 break
         callback args, pred_list
 
+## Autocompleter for contacts retrieved from device
 class ContactCompleter extends RemoteAutocompleter
     @DESCRIPTION = "Contact Addresses"
     onSuccessContacts: (contacts) =>
@@ -532,13 +534,14 @@ class ContactCompleter extends RemoteAutocompleter
             return
         @pred_list = []
         @query = @query.toLowerCase()
-        # These properties are added to the prototype so that the onSuccessContacts can access them later
+        # This calls the function defined by the contacts plugin to search and retrieve contacts according to the fields
         options = new ContactFindOptions()
         options.filter = @query
         options.multiple = true
+        # Searches will be performed in these fields, and this is also the return fields as well.
         fields = ["displayName", "name", "addresses"]
-        navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
         # This uses the input to search for names and addresses and returns the results as contacts array in onSuccessContacts
+        navigator.contacts.find fields, @onSuccessContacts, @onErrorContacts, options
 
 supported_completers =
     poi_categories: new POICategoryCompleter
@@ -547,7 +550,7 @@ supported_completers =
     google: new GoogleCompleter
     osm: new OSMCompleter
     history: new HistoryCompleter
-    contacts: new ContactCompleter #this is for mobile implementation to retrieve addresses from contacts
+    contacts: new ContactCompleter # This is for mobile implementation to retrieve addresses from contacts
     favourites: new FavouritesCompleter # add the taghistory in config.coffee
 
 generate_area_completers = (area) ->
