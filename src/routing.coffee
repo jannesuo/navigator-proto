@@ -133,7 +133,9 @@ $('#map-page').bind 'pageshow', (e, data) ->
 
 
 $('#map-page').on 'pagebeforehide', (e, o) ->
-    if o.nextPage.attr('id') is "front-page" then reset_map()
+    if o.nextPage.attr('id') is "front-page"
+        reset_map()
+        window.ntf_srv_stopNtfService()
 
 reset_map = () ->
         if routeLayer?

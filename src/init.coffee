@@ -52,8 +52,8 @@ class CityNavigator
     set_itinerary: (itinerary) ->
         @itinerary = itinerary
         if itinerary? and window.ntf_srv?
-            #window.ntf_srv_getStatus()
-            window.ntf_srv_setConfig itinerary
-            window.ntf_srv_enableTimer()
+            window.ntf_srv_startService()
+            window.ntf_srv_setItinerary itinerary
+
 # The area for which the city-navigator is configured to.
 window.citynavi = new CityNavigator()
