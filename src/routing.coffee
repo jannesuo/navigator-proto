@@ -31,10 +31,13 @@ siri_to_live = (vehicle) ->
         id: vehicle.MonitoredVehicleJourney.VehicleRef.value
     trip:
         route: vehicle.MonitoredVehicleJourney.LineRef.value
+        direction: vehicle.MonitoredVehicleJourney.DirectionRef.value
+        start_time: vehicle.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef
     position:
         latitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Latitude
         longitude: vehicle.MonitoredVehicleJourney.VehicleLocation.Longitude
         bearing: vehicle.MonitoredVehicleJourney.Bearing
+        delay: vehicle.MonitoredVehicleJourney.Delay
 
 
 interpret_jore = (routeId) ->
@@ -48,9 +51,9 @@ interpret_jore = (routeId) ->
     else if routeId?.match /^300/
         [mode, routeType, route] = ["RAIL", 2, routeId.substring(4,5)]
     else if routeId?.match /^10(0|10)/
-        [mode, routeType, route] = ["TRAM", 0, "#{parseInt routeId.substring(2,4)}"]
+        [mode, routeType, route] = ["TRAM", 0, routeId.replace(/^.0*/,"")]
     else if routeId?.match /^(1|2|4).../
-        [mode, routeType, route] = ["BUS", 3, "#{parseInt routeId.substring(1)}"]
+        [mode, routeType, route] = ["BUS", 3, routeId.replace(/^.0*/,"")]
     else
         # unknown, assume bus
         [mode, routeType, route] = ["BUS", 3, routeId]
@@ -583,6 +586,9 @@ display_route_result = (data) ->
 render_route_layer = (itinerary, routeLayer) ->
     legs = itinerary.legs
 
+    for route_id of citynavi.realtime?.subs or []
+        citynavi.realtime.unsubscribe_route route_id
+
     vehicles = []
     previous_positions = []
 
@@ -640,7 +646,13 @@ render_route_layer = (itinerary, routeLayer) ->
                     if (hours > 0)
                         minutes = (minutes+100).toString().substring(1)
                         minutes = "#{hours}:#{minutes}"
-                    $("#counter#{uid}").text "#{sign}#{minutes}:#{seconds}"
+
+                    if leg.realTime
+                        real_time = "*"
+                    else
+                        real_time = "~"
+
+                    $("#counter#{uid}").text "#{real_time}#{sign}#{minutes}:#{seconds}"
                     setTimeout secondsCounter, 1000
 
                 marker = L.marker(new L.LatLng(point.y, point.x), {icon: icon}).addTo(routeLayer)
@@ -712,10 +724,29 @@ handle_vehicle_update = (initial, msg) ->
                             if interpolations[id]
                                 clearTimeout(interpolations[id])
                             interpolation 1, id, old_pos
+                            if not msg.position.bearing
+                                msg.position.bearing = (L.GeometryUtil.computeAngle map.latLngToLayerPoint(old_pos), map.latLngToLayerPoint(pos))+90
+
                     previous_positions[id] = pos
+                    itinerary = citynavi.get_itinerary()
+                    if itinerary?
+                        for leg in itinerary.legs
+                            if leg.routeType?
+                                [route, ... , direction, start_time] = leg.tripId.split '_'
+                                if route == msg.trip.route and direction == msg.trip.direction and
+                                        start_time == msg.trip.start_time
+                                    $("#vehicle-#{id}").css 'box-shadow', "0px 0px 10px 10px #{google_colors[routeType ? mode]}"
+                                    leg.realTime = true
+                                    leg.startTime += (msg.position.delay-leg.departureDelay)*1000
+                                    leg.endTime += (msg.position.delay-leg.arrivalDelay)*1000
+                                    leg.departureDelay = leg.arrivalDelay = msg.position.delay
+                                else if route == msg.trip.route and direction != msg.trip.direction
+                                    $("#vehicle-#{id}").css 'display', 'none'
+
+                                    
                     $("#vehicle-#{id}").css('transform', "rotate(#{msg.position.bearing+90}deg)")
-#                    $("#vehicle-#{id} img").css('transform', "rotate(-#{msg.position.bearing+90}deg)")
-                    $("#vehicle-#{id} span").css('transform', "rotate(-#{msg.position.bearing+90}deg)")
+#                    $("#vehicle-#{id} img").css('transform', "rotate(#{(msg.position.bearing+90)*-1}deg)")
+                    $("#vehicle-#{id} span").css('transform', "rotate(#{(msg.position.bearing+90)*-1}deg)")
 
 # Renders the route buttons in the map page footer.
 # Itienary is the  itienary suggested for the user to get from source to target.
@@ -940,7 +971,7 @@ create_tile_layer = (map_config) ->
 for key, value of citynavi.config.maps
     layers[key] = create_tile_layer(value)
 
-layers["cloudmade"].addTo(map)
+layers[citynavi.config.defaultmap].addTo(map)
 
 # Use the leafletOsmNotes() function in file file "static/js/leaflet-osm-notes.js"
 # to create layer for showing error notes from OSM in the map.
