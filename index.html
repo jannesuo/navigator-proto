@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset='utf-8'>
+        <meta charset='utf-8' />
         <title>Navigator</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <link rel="stylesheet" href="static/css/jquery.mobile-1.3.1.min.css" />
         <link rel="stylesheet" href="static/css/jqm-icon-pack-2.0-original.css" />
@@ -35,7 +35,7 @@
     </head>
     <body>
         <noscript>Error: No Javascript available in your browser.</noscript>
-        <div id="splashscreen" class="splashscreen" style="display: none"></div>
+        <div id="splashscreen" class="splashscreen" style="display: none" ></div>
         <script>
             // Show the splash screen with a loading message
             // Handler to hide the message when the loading stops
@@ -45,7 +45,7 @@
             document.getElementById("splashscreen").innerHTML = 'Loading...';
             document.getElementById("splashscreen").style.display = 'block';
         </script>
-        <div id="map" style="width: 100%; height: 100%; border: 0;"></div>
+        <div id="map" style="width: 100%; height: 100%; border: 0;" ></div>
         <!-- data-role="page" and other data-roles are jQuery mobile specific widget attributes -->
         <!-- The jQuery mobile will link to pages with data-role="page" based on the id attribute.
              There are several pages in this index.html document. -->
@@ -61,20 +61,23 @@
                 <!-- "Search box" with the list of results for the location that the user wants to go to. -->
                 <ul id="navigate-to-input" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Where do you want to go?"></ul>
             </div>
-            <div data-role="content" style="height: 63px; text-align: right">
-            </div>
+            <div data-role="content" style="height: 63px; text-align: right" ></div>
             <div data-role="content" style="position: absolute; width: 100%; bottom: 0; text-align: center; padding-left: 0; padding-right: 0">
                         <fieldset data-role="controlgroup" data-type="horizontal" data-shadow="true" style="display: inline-block">
-                            <label><input type="checkbox" name="usetransit" checked="checked"><img src="static/images/bus_stop.svg" style="height: 20px;" /></input></label>
+                            <label><input type="checkbox" name="usetransit" checked="checked"><img src="static/images/bus_stop.svg" style="height: 20px;" /></label>
                         </fieldset>
                         <fieldset id="vehiclesettings" data-role="controlgroup" data-type="horizontal" data-shadow="true" style="display: inline-block">
-                            <label><input type="radio" name="vehiclesettings" value="WALK" checked="checked"><img src="static/images/walking.svg" style="height: 20px;"/></input></label>
-                            <label><input type="radio" name="vehiclesettings" value="BICYCLE"><img src="static/images/bicycle.svg" style="height: 20px;"/></input></label>
-                            <label><input type="radio" name="vehiclesettings" value="CAR"><img src="static/images/car.svg" style="height: 20px;"/></input></label>
+                            <label><input type="radio" name="vehiclesettings" value="WALK" checked="checked"><img src="static/images/walking.svg" style="height: 20px;"/></label>
+                            <label><input type="radio" name="vehiclesettings" value="BICYCLE"><img src="static/images/bicycle.svg" style="height: 20px;"/></label>
+                            <label><input type="radio" name="vehiclesettings" value="CAR"><img src="static/images/car.svg" style="height: 20px;"/></label>
                         </fieldset>
             </div>
             <div id="front-page-menu" data-role="popup">
                 <ul data-role="listview" data-inset="true">
+                    <li><a href="#bus-stop-page">
+                        <h3>See bus stops nearby</h3>
+                        <p>View approaching estimations</p>
+                    </a></li>
                   <li><a href="#settings">
                       <h3>Settings</h3>
                       <p>Access the routing settings.</p>
@@ -104,15 +107,15 @@
             </div>
 
             <!-- add the popup in the frontpage -->
-            <div data-role="popup" id="add-address" ata-icon="delete" data-iconpos="notext" class="ui-content">
+            <div data-role="popup" id="add-address" data-icon="delete" data-iconpos="notext" class="ui-content">
                 <label id="label-name" for="fname">Input tag for this address</label>
-                <input type="text" name="fname" id="fname" placeholder="Input tag for this address">
+                <input type="text" name="fname" id="fname" placeholder="Input tag for this address" />
                 <button id="tag-add">OK</button>
                 <!-- <a href="#" id="tag-click" data-role="button">OK</a> -->
             </div>
 
             <div data-role="popup" id="delete-address" class="ui-content">
-                <label id="label-name" for="fname">Are you sure to delete?</label>
+                <label id="label-name2" for="fname">Are you sure to delete?</label>
                 <button id="tag-delete">OK</button>
                 <!-- <a href="#" id="tag-click" data-role="button">OK</a> -->
             </div>
@@ -141,7 +144,9 @@
                     </li>
                 </ul>
                 <form id="comment-box" style="display: none; width: 100%; height: 100%; border: 0;">
-                    <textarea style="width: 100%; height: 100%;"></textarea>
+                    <label>
+                        <textarea style="width: 100%; height: 100%;"></textarea>
+                    </label>
                     <fieldset class="ui-grid-a">
                     <div class="ui-block-a"><button type="button" class="cancel-button" data-theme="c">Cancel</button></div>
                     <div class="ui-block-b"><button type="submit" data-theme="b">Submit</button></div>
@@ -224,7 +229,7 @@
                 <h1>Find nearest services</h1>
             </div>
             <div data-role="content">
-                <ul data-role="list-view">
+                <ul data-role="listview">
                 </ul>
             </div>
         </div>
@@ -235,10 +240,33 @@
                 <h1>Nearest services</h1>
             </div>
             <div data-role="content">
-                <ul data-role="list-view">
+                <ul data-role="listview">
                 </ul>
             </div>
         </div>
+        <!-- "Nearby bus stops" page -->
+        <div id="bus-stop-page" data-role="page">
+            <div data-role="header">
+                <a href="" data-rel="back">Back</a>
+                <h1>Bus stops nearby</h1>
+            </div>
+            <div data-role="content">
+                <ul data-role="listview" style="margin-bottom: 0">
+                </ul>
+            </div>
+        </div>
+        <!-- "Bus stop info" page -->
+        <div id="bus-stop-info" data-role="page">
+            <div data-role="header">
+                <a href="" data-rel="back">Back</a>
+                <h1>Nearest services</h1>
+            </div>
+            <div data-role="content">
+                <ul data-role="listview" style="margin-bottom: 0">
+                </ul>
+            </div>
+        </div>
+
         <!-- Settings page -->
         <div id="settings" data-role="page">
             <div data-role="header">
@@ -249,15 +277,15 @@
                 <ul data-role="listview" style="margin-bottom: 0">
                     <li>
                         <fieldset id="modesettings" data-role="controlgroup" data-type="horizontal">
-                            <label><input type="checkbox" name="BUS"><img src="static/images/bus_stop.svg" style="height: 20px;"/></input></label>
-                            <label><input type="checkbox" name="TRAM"><img src="static/images/tram_stop.svg" style="height: 20px;"/></input></label>
-                            <label><input type="checkbox" name="RAIL"><img src="static/images/train_station2.svg" style="height: 20px;"/></input></label>
-                            <label><input type="checkbox" name="SUBWAY"><img src="static/images/subway.svg" style="height: 20px;"/></input></label>
+                            <label><input type="checkbox" name="BUS"><img src="static/images/bus_stop.svg" style="height: 20px;" /></label>
+                            <label><input type="checkbox" name="TRAM"><img src="static/images/tram_stop.svg" style="height: 20px;"/></label>
+                            <label><input type="checkbox" name="RAIL"><img src="static/images/train_station2.svg" style="height: 20px;"/></label>
+                            <label><input type="checkbox" name="SUBWAY"><img src="static/images/subway.svg" style="height: 20px;"/></label>
                         </fieldset>
                     </li>
                     <li>
                         <input type="checkbox" name="wheelchair" id="wheelchair" />
-                        <label for="wheelchair"><img src="static/images/wheelchair.svg" height=20 style="margin-right:16px; margin-left: 16px" />Wheelchair accessible</label>
+                        <label for="wheelchair"><img src="static/images/wheelchair.svg" height="20" style="margin-right:16px; margin-left: 16px" />Wheelchair accessible</label>
                     </li>
                     <li>
                         <input type="checkbox" name="prefer-free" id="prefer-free" />
@@ -277,40 +305,40 @@
                 <h1>Live map</h1>
             </div>
         </div>
-        <script src="cordova.js"></script>
-        <script src="static/js/jquery-1.8.3.min.js"></script>
-        <script src="static/js/handlebars.min.js"></script>
-        <script src="static/js/leaflet.js"></script>
-        <script src="static/js/leaflet.label.js"></script>
-        <script src="static/js/underscore-min.js"></script>
-        <script src="static/js/backbone-min.js"></script>
-        <script src="static/js/moment.min.js"></script>
-        <script src="static/js/leaflet-osm-notes.js"></script>
-        <script src="static/js/leaflet.geometryutil.js"></script>
-        <script src="http://dev.hsl.fi:9002/faye/client.js"></script>
+        <script src="cordova.js" type="text/javascript"></script>
+        <script src="static/js/jquery-1.8.3.min.js" type="text/javascript"></script>
+        <script src="static/js/handlebars.min.js" type="text/javascript"></script>
+        <script src="static/js/leaflet.js" type="text/javascript"></script>
+        <script src="static/js/leaflet.label.js" type="text/javascript"></script>
+        <script src="static/js/underscore-min.js" type="text/javascript"></script>
+        <script src="static/js/backbone-min.js" type="text/javascript"></script>
+        <script src="static/js/moment.min.js" type="text/javascript"></script>
+        <script src="static/js/leaflet-osm-notes.js" type="text/javascript"></script>
+        <script src="static/js/leaflet.geometryutil.js" type="text/javascript"></script>
+        <script src="http://dev.hsl.fi:9002/faye/client.js" type="text/javascript"></script>
         <script>
-        // Functional testing with TestEm using mocha+chai-framework.
-        if (window.location.hash === '#testem') {
-            window.testem_mode = true;
-            jQuery(document).ready(function($) {
-                $('#front-page').bind('pageinit', function() {
-                    var loadDependencies, suite = '/tests/test_functional.js';
-                    loadDependencies = function(urls, callback) {
-                        if (urls.length > 0) {
-                           $.getScript(urls.shift(0), function() {
-                               loadDependencies(urls, callback);
-                           });
-                        } else { callback(); }
-                    }
-                    loadDependencies([
-                        '/testem/mocha.js', '/testem/chai.js', '/testem.js'
-                    ], function() {
-                        mocha.setup('bdd');
-                        $.getScript(suite, function() { mocha.run(); });
+            // Functional testing with TestEm using mocha+chai-framework.
+            if (window.location.hash === '#testem') {
+                window.testem_mode = true;
+                jQuery(document).ready(function($) {
+                    $('#front-page').bind('pageinit', function() {
+                        var loadDependencies, suite = '/tests/test_functional.js';
+                        loadDependencies = function(urls, callback) {
+                            if (urls.length > 0) {
+                               $.getScript(urls.shift(0), function() {
+                                   loadDependencies(urls, callback);
+                               });
+                            } else { callback(); }
+                        };
+                        loadDependencies([
+                            '/testem/mocha.js', '/testem/chai.js', '/testem.js'
+                        ], function() {
+                            mocha.setup('bdd');
+                            $.getScript(suite, function() { mocha.run(); });
+                        });
                     });
                 });
-            });
-        }
+            }
         </script>
         <script>
         	$(document).on("deviceready", function(){
@@ -318,42 +346,41 @@
         	});
         </script>
         <!-- Initialization related code -->
-        <script src="static/js/init.js"></script>
+        <script src="static/js/init.js" ></script>
         <!-- define the functions communicating with background service for notification -->
-        <script src="static/js/ntfservice.js"></script>
+        <script src="static/js/ntfservice.js" ></script>
         <!-- Configure the geographical area where the app is to be used in -->
-        <script src="static/js/config.js"></script>
-        <script src="static/js/local_config.js"></script>
+        <script src="static/js/config.js" ></script>
         <!-- "Colorful iconic & retina-proof markers for Leaflet,
              based on the Font Awesome/Twitter Bootstrap icons" -->
-        <script src="static/js/leaflet-awesome-markers.js"></script>
+        <script src="static/js/leaflet-awesome-markers.js" ></script>
         <!-- Palvelukartta is not currently used. It utilizes
              REST API for City of Helsinki Service Map -->
-        <script src="static/js/palvelukartta.js"></script>
+        <script src="static/js/palvelukartta.js" ></script>
         <!-- Compass control to show device orientation -->
-        <script src="static/js/compass.js"></script>
+        <script src="static/js/compass.js" ></script>
         <!-- Marker rotated with css transform -->
-        <script src="static/js/rotatedmarker.js"></script>
+        <script src="static/js/rotatedmarker.js" ></script>
         <!-- Handles routing and map drawing -->
-        <script src="static/js/routing.js"></script>
-        <!-- Handles autocompletion related tasks for the "Where do you want to go?"
-             filter at the first page -->
-        <script src="static/js/autocomplete.js"></script>
+        <script src="static/js/routing.js" ></script>
+        <!-- Handles autocompletion related tasks for the "Where do you want to go?" filter at the first page -->
+        <script src="static/js/autocomplete.js" ></script>
         <!-- Handles POI related task such as finding nearby services and geocoding -->
-        <script src="static/js/poi.js"></script>
+        <script src="static/js/poi.js" ></script>
         <!-- Component that handles communication with the navigator-server that
              provides real-time info for the public transportation -->
-        <script src="static/js/realtime.js"></script>
-        <script src="static/js/reach.js"></script>
+        <script src="static/js/realtime.js" ></script>
         <!-- Allow to read an address from a QR-Code -->
-        <script src="static/js/qrcode.js"></script>
+        <script src="static/js/qrcode.js" ></script>
         <!-- Contact Chooser -->
-        <script src="static/js/contactchooser.js"></script>
+        <script src="static/js/contactchooser.js" ></script>
         <!-- Actives google speech recognition to pronounce an address -->
-        <script src="static/js/speechrecognition.js"></script>
+        <script src="static/js/speechrecognition.js" ></script>
         <!-- Load jQuery Mobile as last because init.js handles the jQuery Mobile mobileinit message. -->
-        <script src="static/js/jquery.mobile-1.3.1.min.js"></script>
+        <script src="static/js/jquery.mobile-1.3.1.min.js" ></script>
         <!-- Handles physical buttons (menu and back) of the phone-->
-        <script src="static/js/physicalbuttons.js"></script>
+        <script src="static/js/physicalbuttons.js" ></script>
+        <!-- Handles nearby bus stops logic-->
+        <script src="static/js/busstops.js" ></script>
     </body>
 </html>

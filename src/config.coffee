@@ -260,7 +260,7 @@ citynavi.update_configs {
     nl
 }
 
-citynavi.set_config("manchester")
+citynavi.set_config("helsinki")
 
 
 # Attempt to load local configuration.
