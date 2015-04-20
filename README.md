@@ -25,4 +25,6 @@ npm install
 grunt
 ```
 
- 
+# Related GitHub repositories
+* Cordova plugin to add all dependencies [https://github.com/pekman/navigator-plugin]
+* Server component for push notifications [https://github.com/Mankro/navigator-push-server]
