@@ -96,13 +96,14 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
     * onFailureCallback(error message)
 ###
 fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
+  console.log("Fetching bus stops...")
   locationQuerySucceeded = (position) ->
     if position?
       latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
       longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
       rad = busStopSearchDiameter
       max = busStopsMaximumCountForResults
-
+      console.log("Position calculated for finding bus stops")
       url = fetchBusStopsUrl + "?lat=#{latitude}&lon=#{longitude}&rad=#{rad}&max=#{max}"
       console.log("API call: " + url)
       # get closest bus stops
@@ -233,3 +234,25 @@ $(busStopsPageId).bind 'pageshow', (e, data) ->
   )
   return
 
+$('#kutsuplus-button').on "click", ->
+
+    failureFunction = (error) -> 
+        console.log("nearest Bus stop search failed. Error message: "+error)
+    console.log("Starting Kutsuplus functionality")
+    fetchNearestBusStops(showBusStops, failureFunction)
+
+
+
+    messageInfo =
+      phoneNumber: "+358440301091",
+      textMessage: "Ostan lipun"
+    confirmation = confirm("Do you want to order a Kutsuplus car? This costs up to 20 euros")
+    if confirmation
+        sms.sendMessage(messageInfo,
+          (message) ->
+            console.log("Kutsuplus ordered succesfully: " + message)
+          (error) ->
+            console.log("code: " + error.code + ", message: " + error.message)
+        )
+    else
+        console.log("SMS ticket purchase cancelled.")
