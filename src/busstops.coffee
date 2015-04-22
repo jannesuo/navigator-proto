@@ -1,26 +1,14 @@
 
 # Configurations
 busStopsMaximumCountForResults = 5
-busStopSearchDiameter = 100
+busStopSearchDiameter = 1000
 busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
 fetchBusStopsUrl = "http://www.pubtrans.it/hsl/stops"
 fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
 
-onBusStopClicked = (busStopId) ->
-  fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
-    # onSuccess
-    if busInfoList.length > 0
-      showBusStop(busInfoList, null)
-    else
-      showBusStop(null, null)
-    return
-  , (error) ->
-    # onError
-    showBusStop(null, error)
-    return
-  )
-  return
+# Global variables
+busStopToShowId = ''
 
 ###
     Description: Fetch time estimations for single bus stop
@@ -49,18 +37,17 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
           time : 1429099320
         ###
         busInfos = []
-        for bus of busStopData
+        for i, bus of busStopData
           busInfo = {}
-
           busInfo["line"] = bus.line
-          businfo["estimation"] = true
-          if bus.rtime?
-            businfo["timeStamp"] = new Date(bus.rtime)
-            businfo["estimation"] = false
+          busInfo["estimation"] = true
+          if bus.rtime && bus.rtime != ''?
+            busInfo["timeStamp"] = bus.rtime
+            busInfo["estimation"] = false
           else
-            businfo["timeStamp"] = new Date(bus.time)
+            busInfo["timeStamp"] = bus.time
 
-          busInfos.add(busInfo)
+          busInfos.push(busInfo)
 
         onSuccessCallback(busInfos)
       else
@@ -170,14 +157,42 @@ showBusStops = (busStops, err) ->
   else
     if busStops?
       for i, busStop of busStops
-        console.log("BUSSTOP: " + JSON.stringify(busStop))
-        func = 'onBusStopClicked("' + busStop.id + '")'
-        $list.append("<li><a href='#' onClick='" + func + "'>" + busStop.name + " (" + busStop.code + ")</a></li>")
+        $list.append("<li data-id='" + busStop.id + "'><a href='" + busStopInfoPageId + "'>" + busStop.name + " (" + busStop.code + ")</a></li>")
     else
       $list.append('<li>(No nearby bus stops found)</li>')
 
   $list.listview("refresh")
+
+  $list.on('click', 'li', () ->
+    clickedBusStopId = $(this).attr('data-id')
+    if clickedBusStopId?
+      busStopToShowId = clickedBusStopId
+    else
+      busStopToShowId = ''
+  )
+
   return
+
+millisecondsToTimeString = (milliseconds) ->
+  x = parseInt(milliseconds)
+  x = Math.floor(x / 1000)
+  seconds = x % 60
+  x = Math.floor(x / 60)
+  minutes = x % 60
+  x = Math.floor(x/ 60)
+  hours = x % 24
+  x = Math.floor(x / 24)
+  days = x
+
+  str = "#{seconds}s"
+  if (minutes > 0)
+    str = "#{minutes}m " + str
+  if (hours > 0)
+    str = "#{hours}h " + str
+  if (days > 0)
+    str = "#{days}d " + str
+
+  return str
 
 ### Show Bus stop information in UI ###
 showBusStop = (busInfoList, err) ->
@@ -187,28 +202,63 @@ showBusStop = (busInfoList, err) ->
     $list.append('<li>' + err +  '</li>')
   else
     if busInfoList?
-      for busInfo of busInfoList
-        data = busInfo["timeStamp"]
+
+      for i, busInfo of busInfoList
+        console.log("BUSINFO: " + JSON.stringify(busInfo))
+        data = busInfo["line"] + ': '
+        busEnterTime = new Date(parseInt(busInfo["timeStamp"])*1000) # unix epoch to epoch
+        console.log("Line: " + busInfo["line"] + ": " + busEnterTime)
+        currentTime = Date.now()
+        difference =  busEnterTime.getTime() - currentTime
+
+        if (difference < 0)
+          data += '-'
+        data += millisecondsToTimeString(Math.abs(difference))
+
         if busInfo["estimation"]
           data += ' (e)'
-        $list.append('<li>' + data + '</li>')
+        $list.append('<li style="background-color: white;">' + data + '</li>')
     else
-      $list.append('<li>(no buses approaching)</li>')
+      $list.append('<li style="background-color: white;">(no buses approaching)</li>')
 
   $list.listview("refresh")
   return
 
 # Event happens when the user has selected a bus stop to show.
 $(busStopInfoPageId).bind 'pageinit', (e, data) ->
+  console.log("busStopInfoPageId: pageinit")
   $list = $(busStopsPageId + ' ul')
   $list.empty()
   $list.listview()
   return
 
 $(busStopInfoPageId).bind 'pageshow', (e, data) ->
-  $list = $(busStopsPageId + ' ul')
-  $list.empty()
-  $list.listview()
+  console.log("busStopInfoPageId: pageshow")
+
+  id = busStopToShowId
+
+  if (id? && id != '')
+    console.log("bus stop id: " + id)
+    $list = $(busStopsPageId + ' ul')
+    $list.empty()
+
+    onBusStopClicked = (busStopId) ->
+      fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
+        # onSuccess
+        if busInfoList.length > 0
+          console.log(busInfoList.length + " buses approaching")
+          showBusStop(busInfoList, null)
+        else
+          showBusStop(null, null)
+        return
+      , (error) ->
+        # onError
+        showBusStop(null, error)
+        return
+      )
+      return
+
+    onBusStopClicked(id)
   return
 
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
@@ -256,3 +306,4 @@ $('#kutsuplus-button').on "click", ->
         )
     else
         console.log("SMS ticket purchase cancelled.")
+

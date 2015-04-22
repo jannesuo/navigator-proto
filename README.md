@@ -20,7 +20,7 @@ cordova platform add android
 cordova plugin add https://github.com/pekman/navigator-plugin.git
 cd www
 del /f /s /q *.*  (windows) || rm -rf * (linux)
-git clone https://github.com/jannesuo/navigator-proto.git
+git clone https://github.com/jannesuo/navigator-proto.git .
 npm install
 grunt
 ```
