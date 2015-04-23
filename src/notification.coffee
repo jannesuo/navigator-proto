@@ -31,15 +31,16 @@ onNotification = (e) -> # triggered when notification from GCM arrived after pre
             $.post("https://aalto-hsl-2015-3.herokuapp.com/registerclient", route_details).done (data) ->
                 alert "You are watching disruptions for selected routes" # notify about successful subscription for disruptions notifications       
         when "message" # needs to be modified. First testing required
+            console.log "GCM message: #{JSON.stringify(e.payload)}"
             if e.foreground 
                 soundfile = e.soundname || e.payload.sound
                 sound = new Media("/assets/www/"+ soundfile);
                 sound.play()
             else
                 if e.coldstart
-                    alert e.payload.message
-            alert e.payload.message
-            alert e.payload.msgcnt
+                    alert e.payload.disruption_message
+            alert e.payload.disruption_message
+            # alert e.payload.msgcnt
         when "error"
             alert e.msg
         else 
