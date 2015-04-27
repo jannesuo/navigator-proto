@@ -9,7 +9,26 @@ fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
 
 # Global variables
 busStopToShowId = ''
+actionType = ''
+### Function for sending a Kutsuplus SMS order message ###
 
+sendKutsuplusMessage = (busStopIdDeparture) ->
+
+    confirmation = confirm("Do you want to order a Kutsuplus car? This can cost up to 40 euros.")
+    messageInfo =
+      phoneNumber: "+358440301091",
+      textMessage: "KP " + busStopIdDeparture + " " + "Destination ID"
+    
+    if confirmation
+        sms.sendMessage(messageInfo,
+          (message) ->
+            console.log("SMS ticket purchased succesfully: " + message)
+          (error) ->
+            console.log("code: " + error.code + ", message: " + error.message)
+        )
+    else
+        console.log("SMS ticket purchase cancelled.")
+        
 ###
     Description: Fetch time estimations for single bus stop
     Parameters:
@@ -149,7 +168,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   return
 
 ### Show bus stop list in UI ###
-showBusStops = (busStops, err) ->
+showBusStops = (busStops, err, actionType) ->
   $list = $(busStopsPageId + ' ul')
   $list.empty()
   if err?
@@ -166,7 +185,10 @@ showBusStops = (busStops, err) ->
   $list.on('click', 'li', () ->
     clickedBusStopId = $(this).attr('data-id')
     if clickedBusStopId?
-      busStopToShowId = clickedBusStopId
+      if actionType == "kutsuplus"
+        sendKutsuplusMessage(busStop.code)
+      else:
+        busStopToShowId = clickedBusStopId
     else
       busStopToShowId = ''
   )
@@ -234,7 +256,7 @@ $(busStopInfoPageId).bind 'pageinit', (e, data) ->
 
 $(busStopInfoPageId).bind 'pageshow', (e, data) ->
   console.log("busStopInfoPageId: pageshow")
-
+  
   id = busStopToShowId
 
   if (id? && id != '')
@@ -261,6 +283,10 @@ $(busStopInfoPageId).bind 'pageshow', (e, data) ->
     onBusStopClicked(id)
   return
 
+$('#kutsuplus-button').on "click", ->
+    actionType = "kutsuplus"
+$('#show-stops-button').on "click", ->
+    actionType = "showStops"
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
 # pageinit event happens before the pageshow event
 $(busStopsPageId).bind 'pageshow', (e, data) ->
@@ -272,38 +298,18 @@ $(busStopsPageId).bind 'pageshow', (e, data) ->
   fetchNearestBusStops((busStops) ->
       # provide list of bus stops in UI
       if busStops.length > 0
-        showBusStops(busStops, null)
+        showBusStops(busStops, null, actionType)
       else
-        showBusStops(null, null)
+        showBusStops(null, null, actionType)
       return
   , (errorMessage) ->
     # onFailedCallback
     console.log(errorMessage)
-    showBusStops(null, errorMessage)
+    showBusStops(null, errorMessage, actionType)
     return
   )
   return
 
 $('#kutsuplus-button').on "click", ->
 
-    failureFunction = (error) -> 
-        console.log("nearest Bus stop search failed. Error message: "+error)
-    console.log("Starting Kutsuplus functionality")
-    fetchNearestBusStops(showBusStops, failureFunction)
-
-
-
-    messageInfo =
-      phoneNumber: "+358440301091",
-      textMessage: "Ostan lipun"
-    confirmation = confirm("Do you want to order a Kutsuplus car? This costs up to 20 euros")
-    if confirmation
-        sms.sendMessage(messageInfo,
-          (message) ->
-            console.log("Kutsuplus ordered succesfully: " + message)
-          (error) ->
-            console.log("code: " + error.code + ", message: " + error.message)
-        )
-    else
-        console.log("SMS ticket purchase cancelled.")
 
