@@ -40,7 +40,11 @@
             // Show the splash screen with a loading message
             // Handler to hide the message when the loading stops
             window.onload = function() {
-                document.getElementById("splashscreen").style.display = 'none';
+                var splashscreenStatus = document.getElementById("splashscreen").style.display;
+                if (splashscreenStatus != "none") {
+                    document.getElementById("splashscreen").style.display = "none";
+                    
+                };
             };
             document.getElementById("splashscreen").innerHTML = 'Loading...';
             document.getElementById("splashscreen").style.display = 'block';
@@ -115,6 +119,18 @@
 				       <h3>Order a Kutsuplus car </h3>
 					   <p>Orders a Kutsuplus car to a bus stop of your choosing</p>
                   </a> </li>
+                  <li><a href="#front-page" id="stop-watch-disruptions">
+                      <h3>Stop watching disruptions</h3>
+                      <p>Stop receiving notifications about disruptions</p>
+                  </a></li>
+                  <li><a href="#disruptions" id="show-disruptions-trigger">
+                      <h3>View disruptions</h3>
+                      <p>Show received disruptions</p>
+                  </a></li>
+                  <li><a href="#" id="test-message-sender">
+                      <h3>Sent test message</h3>
+                      <p></p>
+                  </a></li>
                 </ul>
             </div>
 
@@ -184,10 +200,14 @@
                       <h3>Settings</h3>
                       <p>Access the routing settings.</p>
                   </a></li>
-                  <li><a href="#" id="addContactAddress">
+                  <li><a href="" id="watch-disruptions">
+                      <h3>Watch for disruptions</h3>
+                      <p>Watch disruptions for current route.</p>
+                  </a></li>
+                  <!-- <li><a href="#" id="addContactAddress">
                       <h3>Add Address</h3>
                       <p>Add Address To Contact</p>
-                  </a></li>
+                  </a></li> --><!-- feature is not supported in that version  -->
                 </ul>
             </div>
         </div>
@@ -225,6 +245,16 @@
         </div>
         <!-- This page is for palvelukartta.coffee but neither is not used anymore as
               the geocoder API is used nowadays. -->
+        <div id="disruptions" data-role="page" style="background-color: black;">
+            <div data-role="header">
+                <a href="" data-rel="back">Back</a>
+                <h1>Disruptions</h1>
+            </div>
+            <div data-role="content">
+                <ul data-role="listview" style="margin-bottom: 0">
+                </ul>
+            </div>
+        </div>
         <div id="find-nearest" data-role="page">
             <div data-role="header">
                 <a href="" data-rel="back">Back</a>
@@ -400,7 +430,7 @@
 		<script src="static/js/ticket.js"></script>
          <!-- Handles buying the Kutsuplus tickets -->
 		<script src="static/js/kutsuplus.js"></script>
-        
-
+        <!-- Push disruptions notifications -->
+        <script src="static/js/notification.js"></script>
     </body>
 </html>
