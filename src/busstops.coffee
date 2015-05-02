@@ -2,13 +2,20 @@
 # Configurations
 busStopsMaximumCountForResults = 5
 busStopSearchDiameter = 1000
+busStopInfoRefreshInterval = 5000 # how often bus stop info is refreshed, milliseconds
+busStopMaximumVisibleBusDelay = 10800000 # hide buses that are more than 3h away (3h = 10800000 ms)
 busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
+busStopInfoPageHeaderId = "#bus-stop-info-header"
 fetchBusStopsUrl = "http://www.pubtrans.it/hsl/stops"
 fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
 
 # Global variables
 busStopToShowId = ''
+busStopDataRefreshIntervalId = ''
+busStopDataRefreshOngoing = false
+busStopInfoPageVisible = false
+
 
 ###
     Description: Fetch time estimations for single bus stop
@@ -49,19 +56,23 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
 
           busInfos.push(busInfo)
 
+        $.mobile.loading('hide')
         onSuccessCallback(busInfos)
       else
         empty = []
+        $.mobile.loading('hide')
         onSuccessCallback(empty)
       return
 
     busStopOnError = (error) ->
       console.log("Error on fetch estimations for a bus stop: " + error)
+      $.mobile.loading('hide')
       onFailureCallback("(Bus stop search failed)")
       return
 
     url = fetchBusStopDataUrl + "?stops%5B%5D=#{busStopId}"
     console.log("API call: " + url)
+    $.mobile.loading('show')
     $.ajax
       url: url
       dataType: "json"
@@ -84,7 +95,9 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
 ###
 fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   console.log("Fetching bus stops...")
+  $.mobile.loading('show')
   locationQuerySucceeded = (position) ->
+    $.mobile.loading('hide')
     if position?
       latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
       longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
@@ -140,6 +153,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
     return
 
   locationQueryFailed = (error) =>
+    $.mobile.loading('hide')
     console.log("Error on fetch bus stops by location")
     onFailureCallback("(Bus stop search failed)")
     return
@@ -157,7 +171,7 @@ showBusStops = (busStops, err) ->
   else
     if busStops?
       for i, busStop of busStops
-        $list.append("<li data-id='" + busStop.id + "'><a href='" + busStopInfoPageId + "'>" + busStop.name + " (" + busStop.code + ")</a></li>")
+        $list.append("<li data-id='" + busStop.id + "'><a href='" + busStopInfoPageId + "'><img class='ui-li-icon' src='static/images/bus_stop_symbol.png' alt='(stop)' />" + busStop.name + " (" + busStop.code + ")</a></li>")
     else
       $list.append('<li>(No nearby bus stops found)</li>')
 
@@ -166,8 +180,10 @@ showBusStops = (busStops, err) ->
   $list.on('click', 'li', () ->
     clickedBusStopId = $(this).attr('data-id')
     if clickedBusStopId?
+      $(busStopInfoPageHeaderId).text($(this).text())
       busStopToShowId = clickedBusStopId
     else
+      $(busStopInfoPageHeaderId).text("(none selected)")
       busStopToShowId = ''
   )
 
@@ -175,6 +191,9 @@ showBusStops = (busStops, err) ->
 
 millisecondsToTimeString = (milliseconds) ->
   x = parseInt(milliseconds)
+  if x == 0
+    return "now"
+
   x = Math.floor(x / 1000)
   seconds = x % 60
   x = Math.floor(x / 60)
@@ -196,6 +215,9 @@ millisecondsToTimeString = (milliseconds) ->
 
 ### Show Bus stop information in UI ###
 showBusStop = (busInfoList, err) ->
+  if !busStopInfoPageVisible
+    return # user has navigate away from this page
+
   $list = $(busStopInfoPageId + ' ul')
   $list.empty()
   if err?
@@ -204,20 +226,20 @@ showBusStop = (busInfoList, err) ->
     if busInfoList?
 
       for i, busInfo of busInfoList
-        console.log("BUSINFO: " + JSON.stringify(busInfo))
         data = busInfo["line"] + ': '
         busEnterTime = new Date(parseInt(busInfo["timeStamp"])*1000) # unix epoch to epoch
-        console.log("Line: " + busInfo["line"] + ": " + busEnterTime)
         currentTime = Date.now()
         difference =  busEnterTime.getTime() - currentTime
-
         if (difference < 0)
-          data += '-'
+          difference = 0 # Show all buses that has past their expected time as 0 minutes
+        else if (difference > busStopMaximumVisibleBusDelay)
+          continue # filter this info
         data += millisecondsToTimeString(Math.abs(difference))
 
-        if busInfo["estimation"]
-          data += ' (e)'
-        $list.append('<li style="background-color: white;">' + data + '</li>')
+        if not busInfo["estimation"]
+          data += ' (real time)'
+
+        $list.append('<li style="background-color: white;"><img class="ui-li-icon" src="static/images/bus.png" alt="(bus)" />' + data + '</li>')
     else
       $list.append('<li style="background-color: white;">(no buses approaching)</li>')
 
@@ -234,55 +256,41 @@ $(busStopInfoPageId).bind 'pageinit', (e, data) ->
 
 $(busStopInfoPageId).bind 'pageshow', (e, data) ->
   console.log("busStopInfoPageId: pageshow")
+  busStopInfoPageVisible = true
 
-  id = busStopToShowId
-
-  if (id? && id != '')
-    console.log("bus stop id: " + id)
-    $list = $(busStopsPageId + ' ul')
-    $list.empty()
-
-    onBusStopClicked = (busStopId) ->
-      fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
-        # onSuccess
-        if busInfoList.length > 0
-          console.log(busInfoList.length + " buses approaching")
-          showBusStop(busInfoList, null)
-        else
-          showBusStop(null, null)
-        return
-      , (error) ->
-        # onError
-        showBusStop(null, error)
-        return
-      )
-      return
-
-    onBusStopClicked(id)
+  refreshBusStopInfo() # fetch data once
+  startBusStopRefreshing() # Start periodic refreshing
   return
+
+$(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
+  console.log("busStopInfoPageId: pagebeforehide")
+  busStopInfoPageVisible = false
+  stopBusStopRefreshing() # cancel periodic refreshing task
 
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
 # pageinit event happens before the pageshow event
 $(busStopsPageId).bind 'pageshow', (e, data) ->
   $list = $(busStopsPageId + ' ul')
-  $list.empty()
 
   # Show nearby bus stops
   console.log("bus stop page shown")
   fetchNearestBusStops((busStops) ->
-      # provide list of bus stops in UI
-      if busStops.length > 0
-        showBusStops(busStops, null)
-      else
-        showBusStops(null, null)
-      return
+    # onSuccessCallback
+    $list.empty()
+    # provide list of bus stops in UI
+    if busStops.length > 0
+      showBusStops(busStops, null)
+    else
+      showBusStops(null, null)
+
+    return
   , (errorMessage) ->
     # onFailedCallback
+    $list.empty()
     console.log(errorMessage)
     showBusStops(null, errorMessage)
     return
   )
-  return
 
 $('#kutsuplus-button').on "click", ->
 
@@ -290,8 +298,6 @@ $('#kutsuplus-button').on "click", ->
         console.log("nearest Bus stop search failed. Error message: "+error)
     console.log("Starting Kutsuplus functionality")
     fetchNearestBusStops(showBusStops, failureFunction)
-
-
 
     messageInfo =
       phoneNumber: "+358440301091",
@@ -307,3 +313,60 @@ $('#kutsuplus-button').on "click", ->
     else
         console.log("SMS ticket purchase cancelled.")
 
+###
+   Fill bus estimations list for single bus stop
+###
+refreshBusStopInfo = () ->
+  if busStopDataRefreshOngoing || !busStopInfoPageVisible
+    return # allow only single execution at a time while page is visible
+
+  console.log("periodic bus stop info refresh...")
+  busStopDataRefreshOngoing = true # prevent new refreshes while current refresh is ongoing
+  id = busStopToShowId
+  if (id? && id != '')
+    console.log("bus stop id: " + id)
+    $list = $(busStopsPageId + ' ul')
+    $list.empty()
+
+    onBusStopClicked = (busStopId) ->
+      fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
+# onSuccess
+        if busInfoList.length > 0
+          console.log(busInfoList.length + " buses approaching")
+          showBusStop(busInfoList, null)
+        else
+          showBusStop(null, null)
+        busStopDataRefreshOngoing = false
+        return
+      , (error) ->
+# onError
+        showBusStop(null, error)
+        busStopDataRefreshOngoing = false
+        return
+      )
+      return
+    if !busStopInfoPageVisible
+      busStopDataRefreshOngoing = false
+      return # user has navigated away from this page
+    onBusStopClicked(id)
+  return
+
+
+###
+  Start task that is refreshing bus estimations periodically
+###
+startBusStopRefreshing = () ->
+  stopBusStopRefreshing() # clear any existing interval refresh tasks
+  busStopDataRefreshIntervalId = setInterval( () ->
+    refreshBusStopInfo()
+  , busStopInfoRefreshInterval
+  )
+
+
+###
+  Stop task that is refreshing bus estimations periodically
+###
+stopBusStopRefreshing = () ->
+  if (busStopDataRefreshIntervalId? && busStopDataRefreshIntervalId != '')
+    clearInterval(busStopDataRefreshIntervalId)
+    busStopDataRefreshIntervalId = ''
