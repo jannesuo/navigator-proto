@@ -217,7 +217,7 @@ helsinki =
             {type: "swimming_pool"}
             {type: "toilet"} # XXX is this what's available here?
         ]
-    autocompletion_providers: ["poi_categories", "favourites", "contacts", "history", "geocoder", "osm"]
+    autocompletion_providers: ["poi_categories", "history", "geocoder", "osm"]
     speech_language: "fi-FI"
 
 nl =
