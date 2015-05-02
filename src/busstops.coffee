@@ -6,18 +6,19 @@ busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
 fetchBusStopsUrl = "http://www.pubtrans.it/hsl/stops"
 fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
+fetchCoordinatesUrl = "api.reittiopas.fi/hsl/prod/"
 
 # Global variables
 busStopToShowId = ''
 actionType = ''
 ### Function for sending a Kutsuplus SMS order message ###
 
-sendKutsuplusMessage = (busStopIdDeparture) ->
-
-    confirmation = confirm("Do you want to order a Kutsuplus car? This can cost up to 40 euros.")
+sendKutsuplusMessage = (busStopIdDeparture, busStopIdDestination) ->
+    
+    confirmation = confirm("Do you want to order a Kutsuplus car to "+ busStopIdDestination +"? This can cost up to 40 euros.")
     messageInfo =
       phoneNumber: "+358440301091",
-      textMessage: "KP " + busStopIdDeparture + " " + "Destination ID"
+      textMessage: "KP " + busStopIdDeparture + " " + busStopIdDestination
     
     if confirmation
         sms.sendMessage(messageInfo,
@@ -167,7 +168,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   navigator.geolocation.getCurrentPosition(locationQuerySucceeded, locationQueryFailed)
   return
 
-### Show bus stop list in UI ###
+### Show bus stop list in UI, actionType determines what happens after the busstop is selected ###
 showBusStops = (busStops, err, actionType) ->
   $list = $(busStopsPageId + ' ul')
   $list.empty()
@@ -186,7 +187,8 @@ showBusStops = (busStops, err, actionType) ->
     clickedBusStopId = $(this).attr('data-id')
     if clickedBusStopId?
       if actionType == "kutsuplus"
-        sendKutsuplusMessage(busStop.code)
+        destination_address = prompt("Please type your destination address")
+        sendKutsuplusMessage(busStop.code, destination_address)
       else:
         busStopToShowId = clickedBusStopId
     else
