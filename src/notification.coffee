@@ -52,6 +52,8 @@ onNotification = (e) -> # triggered when notification from GCM arrived after pre
                         category = "tram"
                     else if leg["mode"] == "FERRY"
                         category = "ferry"
+                    else if leg["mode"] == "SUBWAY"
+                        category = "metro"
                     else
                         categoryNumber = parseInt leg["routeId"].charAt(0)
                         if categoryNumber of categories 
