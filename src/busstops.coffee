@@ -3,7 +3,7 @@
 busStopsMaximumCountForResults = 5
 busStopSearchDiameter = 1000
 busStopInfoRefreshInterval = 5000 # how often bus stop info is refreshed, milliseconds
-busStopMaximumVisibleBusDelay = 10800000 # hide buses that are more than 3h away (3h = 10800000 ms)
+busStopMaximumVisibleBusDelay = 21600000 # hide buses that are more than 6h away (6h = 21600000 ms)
 busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
 busStopInfoPageHeaderId = "#bus-stop-info-header"
