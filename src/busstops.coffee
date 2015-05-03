@@ -27,6 +27,7 @@ busStopInfoPageVisible = false
 fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallback) ->
     parseBusStopData = (busStopData) ->
       if busStopData?
+        console.log("parsing bus stop data...")
         ###
           rtime = real time estimation in epoch time (if available)
           time  = static time estimation
@@ -56,23 +57,24 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
 
           busInfos.push(busInfo)
 
-        $.mobile.loading('hide')
+        loading('hide')
+        console.log("done...")
         onSuccessCallback(busInfos)
       else
         empty = []
-        $.mobile.loading('hide')
+        loading('hide')
         onSuccessCallback(empty)
       return
 
     busStopOnError = (error) ->
       console.log("Error on fetch estimations for a bus stop: " + error)
-      $.mobile.loading('hide')
+      loading('hide')
       onFailureCallback("(Bus stop search failed)")
       return
 
     url = fetchBusStopDataUrl + "?stops%5B%5D=#{busStopId}"
     console.log("API call: " + url)
-    $.mobile.loading('show')
+    loading('show')
     $.ajax
       url: url
       dataType: "json"
@@ -95,9 +97,9 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
 ###
 fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   console.log("Fetching bus stops...")
-  $.mobile.loading('show')
+  loading('show')
   locationQuerySucceeded = (position) ->
-    $.mobile.loading('hide')
+    loading('hide')
     if position?
       latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
       longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
@@ -153,7 +155,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
     return
 
   locationQueryFailed = (error) =>
-    $.mobile.loading('hide')
+    loading('hide')
     console.log("Error on fetch bus stops by location")
     onFailureCallback("(Bus stop search failed)")
     return
@@ -216,16 +218,20 @@ millisecondsToTimeString = (milliseconds) ->
 ### Show Bus stop information in UI ###
 showBusStop = (busInfoList, err) ->
   if !busStopInfoPageVisible
+    console.log("no bus stop page visible when asked to show bus stops")
     return # user has navigate away from this page
 
+  defaultNoItemsRow = '<li style="background-color: black; color: white;">(no buses approaching)</li>'
   $list = $(busStopInfoPageId + ' ul')
   $list.empty()
   if err?
+    console.log("ERR: " + err)
     $list.append('<li>' + err +  '</li>')
   else
     if busInfoList?
-
+      count = 0
       for i, busInfo of busInfoList
+        console.log("BusInfo" + i + ": " + busInfo)
         data = busInfo["line"] + ': '
         busEnterTime = new Date(parseInt(busInfo["timeStamp"])*1000) # unix epoch to epoch
         currentTime = Date.now()
@@ -233,6 +239,7 @@ showBusStop = (busInfoList, err) ->
         if (difference < 0)
           difference = 0 # Show all buses that has past their expected time as 0 minutes
         else if (difference > busStopMaximumVisibleBusDelay)
+          console.log("BusInfo" + i + ": filtered based on time offset")
           continue # filter this info
         data += millisecondsToTimeString(Math.abs(difference))
 
@@ -240,8 +247,12 @@ showBusStop = (busInfoList, err) ->
           data += ' (real time)'
 
         $list.append('<li style="background-color: white;"><img class="ui-li-icon" src="static/images/bus.png" alt="(bus)" />' + data + '</li>')
+        count += 1
+
+      if count == 0
+        $list.append(defaultNoItemsRow)
     else
-      $list.append('<li style="background-color: white;">(no buses approaching)</li>')
+      $list.append(defaultNoItemsRow)
 
   $list.listview("refresh")
   return
@@ -249,7 +260,7 @@ showBusStop = (busInfoList, err) ->
 # Event happens when the user has selected a bus stop to show.
 $(busStopInfoPageId).bind 'pageinit', (e, data) ->
   console.log("busStopInfoPageId: pageinit")
-  $list = $(busStopsPageId + ' ul')
+  $list = $(busStopInfoPageId + ' ul')
   $list.empty()
   $list.listview()
   return
@@ -258,8 +269,13 @@ $(busStopInfoPageId).bind 'pageshow', (e, data) ->
   console.log("busStopInfoPageId: pageshow")
   busStopInfoPageVisible = true
 
-  refreshBusStopInfo() # fetch data once
-  startBusStopRefreshing() # Start periodic refreshing
+  # Clear list from existing info
+  $list = $(busStopInfoPageId + ' ul')
+  $list.empty()
+
+  # fetch data & start periodic refreshing task
+  refreshBusStopInfo()
+  startBusStopRefreshing()
   return
 
 $(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
@@ -325,9 +341,6 @@ refreshBusStopInfo = () ->
   id = busStopToShowId
   if (id? && id != '')
     console.log("bus stop id: " + id)
-    $list = $(busStopsPageId + ' ul')
-    $list.empty()
-
     onBusStopClicked = (busStopId) ->
       fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
 # onSuccess
@@ -350,6 +363,16 @@ refreshBusStopInfo = () ->
       return # user has navigated away from this page
     onBusStopClicked(id)
   return
+
+
+###
+  Helper function to show or hide ajax loading animation
+  call loading('show') or loading('hide') to change the loading status
+###
+loading = (showOrHide) ->
+  setTimeout(() ->
+    $.mobile.loading(showOrHide);
+  , 1)
 
 
 ###
