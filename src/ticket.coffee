@@ -10,6 +10,7 @@ $(document).on "deviceready", ->
         sms.sendMessage(messageInfo,
           (message) ->
             console.log("SMS ticket purchased succesfully: " + message)
+            alert("SMS ticket is ordered successfully. You should receive the ticket in a while.")
           (error) ->
             console.log("code: " + error.code + ", message: " + error.message)
         )
