@@ -11,13 +11,13 @@ $(document).on "deviceready", ->
         , 4)
     pushNotification = window.plugins.pushNotification # assigning plugin variable 
     $("#watch-disruptions").on "click", -> # clickListener "Watch disruptions" button
-    	pushNotification.register successHandler, errorHandler, #registering device/requesting existing id
+    	pushNotification.register emptyFunction, errorHandler, #registering device/requesting existing id
                                                     {
                                                         "senderID": "839795242412", # GCM project id
                                                         "ecb": "onNotification", # callback for incoming notifications
                                                     }
     $("#stop-watch-disruptions").on "click", -> # clickListener "Stop watching" button
-    	pushNotification.register successHandler, errorHandler, #requesting existing id
+    	pushNotification.register emptyFunction, errorHandler, #requesting existing id
                                                     {
                                                         "senderID": "839795242412",
                                                         "ecb": "stopWatchDisruptions", # callback to unregister device from push-server
@@ -28,7 +28,7 @@ $(document).on "deviceready", ->
             "category": "espooInternal",
             } 
         $.post("https://aalto-hsl-2015-3.herokuapp.com/send-test-message", route_details).done (data) ->
-                alert "You sent test message"
+                # alert "You sent test message"
 
 
     successHandler = (result) -> # plugin's success handler
@@ -70,7 +70,7 @@ onNotification = (e) -> # triggered when notification from GCM arrived after pre
                     }
                     route_details["sections"].push route
             $.post("https://aalto-hsl-2015-3.herokuapp.com/registerclient", route_details).done (data) -> #send POST route details to push server
-                alert "You are watching disruptions for selected routes" # notify about successful subscription for disruptions notifications       
+                # alert "You are watching disruptions for selected routes" # notify about successful subscription for disruptions notifications       
         when "message" # when disruptions messages come
             alert "You received new disruption message"
             if e.foreground # if app is in the foreground
@@ -87,7 +87,7 @@ stopWatchDisruptions = (e) -> # triggered when notification from GCM arrived aft
         when "registered"
             $.post "https://aalto-hsl-2015-3.herokuapp.com/deregisterclient", {registration_id:"#{e.regid}"} # send regId to push server to unsubscribe from watching disruptions
               .done (data) ->
-                  alert "You stopped watching for disruptions"
+                  # alert "You stopped watching for disruptions"
 
 startWaitingMessages = (e) -> # triggered when app is launched
     switch e.event
