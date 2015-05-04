@@ -4,15 +4,36 @@ busStopsMaximumCountForResults = 5
 busStopSearchDiameter = 1000
 busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
+kutsuplusPageId = "#kutsuplus-page"
 fetchBusStopsUrl = "http://www.pubtrans.it/hsl/stops"
 fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
 fetchCoordinatesUrl = "api.reittiopas.fi/hsl/prod/"
 
 # Global variables
 busStopToShowId = ''
-actionType = ''
-### Function for sending a Kutsuplus SMS order message ###
+actionType = ""
 
+
+###Gets coordinates from Google. And shows nearest bus stops ###
+###Modified from https://mindfiremobile.wordpress.com/2013/11/29/getting-geo-coordinates-from-address-in-phonegap-application-using-google-api/   ###
+getCoordinatesFromAddress = (address, onSuccessCallback) ->
+    console.log("Getting coordinates for address: "+address)
+    getGeocoder = new google.maps.Geocoder()
+    getGeocoder.geocode( { 'address': address}, (results, status) ->
+        if status == google.maps.GeocoderStatus.OK
+            if results[0]
+                latitude = results[0].geometry.location.lat()
+                longitude = results[0].geometry.location.lng()
+                console.log('Latitude : ' + latitude + ',' + 'Longitude : ' + longitude)
+                onSuccessCallback(latitude, longitude)  
+            else
+                console.log('Unable to detect your coordinates.')
+        else
+             console.log('Unable to detect your coordinates.')
+    )
+
+
+### Function for sending a Kutsuplus SMS order message ###
 sendKutsuplusMessage = (busStopIdDeparture, busStopIdDestination) ->
     
     confirmation = confirm("Do you want to order a Kutsuplus car to "+ busStopIdDestination +"? This can cost up to 40 euros.")
@@ -95,19 +116,7 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
         parseBusStopData(data)
         return
     return
-
-###
-   Description: Fetch nearest bus stops by geolocation
-   Parameters:
-    * onSuccessCallback(array of bus stops with properties)
-    * onFailureCallback(error message)
-###
-fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
-  console.log("Fetching bus stops...")
-  locationQuerySucceeded = (position) ->
-    if position?
-      latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
-      longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
+fetchNearestBusStopsByCoordinates = (latitude, longitude, onSuccessCallback, onFailureCallback) ->
       rad = busStopSearchDiameter
       max = busStopsMaximumCountForResults
       console.log("Position calculated for finding bus stops")
@@ -153,6 +162,21 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
 
               onSuccessCallback(busStops)
           return
+    
+###
+   Description: Fetch nearest bus stops by geolocation
+   Parameters:
+    * onSuccessCallback(array of bus stops with properties)
+    * onFailureCallback(error message)
+###
+fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
+  console.log("Fetching bus stops...")
+  locationQuerySucceeded = (position) ->
+    if position?
+      latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
+      longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
+      fetchNearestBusStopsByCoordinates(latitude, longitude, onSuccessCallback, onFailureCallback)
+      
     else
       console.log("Couldn't acquire the current position")
       onFailureCallback("(Couldn't acquire the current position)")
@@ -169,7 +193,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   return
 
 ### Show bus stop list in UI, actionType determines what happens after the busstop is selected ###
-showBusStops = (busStops, err, actionType) ->
+showBusStops = (busStops, err, actionType, kutsuplusDepartureStop) ->
   $list = $(busStopsPageId + ' ul')
   $list.empty()
   if err?
@@ -177,7 +201,11 @@ showBusStops = (busStops, err, actionType) ->
   else
     if busStops?
       for i, busStop of busStops
-        $list.append("<li data-id='" + busStop.id + "'><a href='" + busStopInfoPageId + "'>" + busStop.name + " (" + busStop.code + ")</a></li>")
+        if actionType == "kutsuplus" or actionType == "kutsuplusSend"
+            refId = "#"
+        else:
+            refId = busStopInfoPageId
+        $list.append("<li data-id='" + busStop.id + "'><a href='" + refId + "'>" + busStop.name + " (" + busStop.code + ")</a></li>")
     else
       $list.append('<li>(No nearby bus stops found)</li>')
 
@@ -188,7 +216,19 @@ showBusStops = (busStops, err, actionType) ->
     if clickedBusStopId?
       if actionType == "kutsuplus"
         destination_address = prompt("Please type your destination address")
-        sendKutsuplusMessage(busStop.code, destination_address)
+        getCoordinatesFromAddress(destination_address, (latitude, longitude) ->
+              fetchNearestBusStopsByCoordinates(latitude, longitude, (busStops) ->
+                  # provide list of bus stops in UI
+                  console.log("Getting nearest bus stops for Kutsuplus")
+                  if busStops.length > 0
+                    showBusStops(busStops, null, "kutsuplusSend", busStop.code)
+                  else
+                    showBusStops(null, null, "kutsuplusSend", busStop.code)
+                  return      
+              )
+        )
+      else if actionType == "kutsuplusSend"
+        sendKutsuplusMessage(kutsuplusDepartureStop, busStop.code)
       else:
         busStopToShowId = clickedBusStopId
     else
@@ -285,16 +325,32 @@ $(busStopInfoPageId).bind 'pageshow', (e, data) ->
     onBusStopClicked(id)
   return
 
-$('#kutsuplus-button').on "click", ->
-    actionType = "kutsuplus"
-$('#show-stops-button').on "click", ->
-    actionType = "showStops"
+# Kutsuplus page
+$(kutsuplusPageId).bind 'pageshow', (e, data) ->
+  $list = $(kutsuplusPageId + ' ul')
+  $list.empty()
+  # Show nearby bus stops
+  console.log("bus stop page shown")
+  fetchNearestBusStops((busStops) ->
+      # provide list of bus stops in UI
+      if busStops.length > 0
+        showBusStops(busStops, null, "kutsuplus")
+      else
+        showBusStops(null, null, "kutsuplus")
+      return
+  , (errorMessage) ->
+    # onFailedCallback
+    console.log(errorMessage)
+    showBusStops(null, errorMessage, "kutsuplus")
+    return
+  )
+  return
+
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
 # pageinit event happens before the pageshow event
 $(busStopsPageId).bind 'pageshow', (e, data) ->
   $list = $(busStopsPageId + ' ul')
   $list.empty()
-
   # Show nearby bus stops
   console.log("bus stop page shown")
   fetchNearestBusStops((busStops) ->
@@ -311,7 +367,5 @@ $(busStopsPageId).bind 'pageshow', (e, data) ->
     return
   )
   return
-
-$('#kutsuplus-button').on "click", ->
 
 
