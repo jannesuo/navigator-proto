@@ -3,20 +3,74 @@
 busStopsMaximumCountForResults = 5
 busStopSearchDiameter = 1000
 busStopInfoRefreshInterval = 5000 # how often bus stop info is refreshed, milliseconds
-busStopMaximumVisibleBusDelay = 10800000 # hide buses that are more than 3h away (3h = 10800000 ms)
+busStopMaximumVisibleBusDelay = 21600000 # hide buses that are more than 6h away (6h = 21600000 ms)
 busStopsPageId = "#bus-stop-page"
 busStopInfoPageId = "#bus-stop-info"
+kutsuplusPageId = "#kutsuplus-page"
+kutsuplusPageHeaderId = "#kutsuplus-page-header"
 busStopInfoPageHeaderId = "#bus-stop-info-header"
 fetchBusStopsUrl = "http://www.pubtrans.it/hsl/stops"
 fetchBusStopDataUrl = "http://www.pubtrans.it/hsl/reittiopas/departure-api"
+fetchCoordinatesUrl = "api.reittiopas.fi/hsl/prod/"
 
 # Global variables
 busStopToShowId = ''
 busStopDataRefreshIntervalId = ''
 busStopDataRefreshOngoing = false
 busStopInfoPageVisible = false
+actionType = ""
+
+#Fades toast-notification messages. Source: https://gist.github.com/kamranzafar/3136584
+toast = (msg) ->
+  $('<div class=\'ui-loader ui-overlay-shadow ui-body-e ui-corner-all\'><h3>' + msg + '</h3></div>').css(
+    display: 'block'
+    opacity: 0.90
+    position: 'fixed'
+    padding: '7px'
+    'text-align': 'center'
+    width: '270px'
+    left: ($(window).width() - 284) / 2
+    top: $(window).height() / 2).appendTo($.mobile.pageContainer).delay(4000).fadeOut 400, ->
+    $(this).remove()
+    return
+  return
+
+###Gets coordinates from Google. And shows nearest bus stops ###
+###Modified from https://mindfiremobile.wordpress.com/2013/11/29/getting-geo-coordinates-from-address-in-phonegap-application-using-google-api/   ###
+getCoordinatesFromAddress = (address, onSuccessCallback) ->
+    getGeocoder = new google.maps.Geocoder()
+    getGeocoder.geocode( { 'address': address}, (results, status) ->
+        if status == google.maps.GeocoderStatus.OK
+            if results[0]
+                latitude = results[0].geometry.location.lat()
+                longitude = results[0].geometry.location.lng()
+                onSuccessCallback(latitude, longitude)  
+            else
+                console.log('Unable to detect your coordinates.')
+        else
+             console.log('Unable to detect your coordinates.')
+    )
 
 
+### Function for sending a Kutsuplus SMS order message ###
+sendKutsuplusMessage = (busStopIdDeparture, busStopIdDestination) ->
+    confirmationMessage = 'Do you want to order a Kutsuplus car to ' + busStopIdDestination + ' This can cost up to 40 euros.'
+    confirmation = confirm(confirmationMessage)
+    messageInfo =
+      phoneNumber: "+358440301091",
+      textMessage: "KP " + busStopIdDeparture + " " + busStopIdDestination
+    
+    if confirmation
+        sms.sendMessage(messageInfo,
+          (message) ->
+            console.log("SMS ticket purchased succesfully: " + message)
+            toast("Kutsuplus car message sent succesfully. You should receive a confirmation SMS soon")
+          (error) ->
+            console.log("code: " + error.code + ", message: " + error.message)
+        )
+    else
+        console.log("SMS ticket purchase cancelled.")
+        
 ###
     Description: Fetch time estimations for single bus stop
     Parameters:
@@ -27,6 +81,7 @@ busStopInfoPageVisible = false
 fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallback) ->
     parseBusStopData = (busStopData) ->
       if busStopData?
+        console.log("parsing bus stop data...")
         ###
           rtime = real time estimation in epoch time (if available)
           time  = static time estimation
@@ -56,23 +111,23 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
 
           busInfos.push(busInfo)
 
-        $.mobile.loading('hide')
+        loading('hide')
         onSuccessCallback(busInfos)
       else
         empty = []
-        $.mobile.loading('hide')
+        loading('hide')
         onSuccessCallback(empty)
       return
 
     busStopOnError = (error) ->
       console.log("Error on fetch estimations for a bus stop: " + error)
-      $.mobile.loading('hide')
+      loading('hide')
       onFailureCallback("(Bus stop search failed)")
       return
 
     url = fetchBusStopDataUrl + "?stops%5B%5D=#{busStopId}"
     console.log("API call: " + url)
-    $.mobile.loading('show')
+    loading('show')
     $.ajax
       url: url
       dataType: "json"
@@ -82,25 +137,11 @@ fetchTimeEstimationsForBusStop =  (busStopId, onSuccessCallback, onFailureCallba
         return
       success: (data, textStatus, jqXHR) ->
         console.log("fetchTimeEstimationsForBusStop:success")
-        console.log("JSON: " + JSON.stringify(data))
         parseBusStopData(data)
         return
     return
 
-###
-   Description: Fetch nearest bus stops by geolocation
-   Parameters:
-    * onSuccessCallback(array of bus stops with properties)
-    * onFailureCallback(error message)
-###
-fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
-  console.log("Fetching bus stops...")
-  $.mobile.loading('show')
-  locationQuerySucceeded = (position) ->
-    $.mobile.loading('hide')
-    if position?
-      latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
-      longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
+fetchNearestBusStopsByCoordinates = (latitude, longitude, onSuccessCallback, onFailureCallback) ->
       rad = busStopSearchDiameter
       max = busStopsMaximumCountForResults
       console.log("Position calculated for finding bus stops")
@@ -146,6 +187,21 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
 
               onSuccessCallback(busStops)
           return
+    
+###
+   Description: Fetch nearest bus stops by geolocation
+   Parameters:
+    * onSuccessCallback(array of bus stops with properties)
+    * onFailureCallback(error message)
+###
+fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
+  console.log("Fetching bus stops...")
+  locationQuerySucceeded = (position) ->
+    if position?
+      latitude = position.coords.latitude.toString()    #.replace(".", "").slice(0, 7)
+      longitude = position.coords.longitude.toString()  #.replace(".", "").slice(0, 7)
+      fetchNearestBusStopsByCoordinates(latitude, longitude, onSuccessCallback, onFailureCallback)
+      
     else
       console.log("Couldn't acquire the current position")
       onFailureCallback("(Couldn't acquire the current position)")
@@ -153,7 +209,7 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
     return
 
   locationQueryFailed = (error) =>
-    $.mobile.loading('hide')
+    loading('hide')
     console.log("Error on fetch bus stops by location")
     onFailureCallback("(Bus stop search failed)")
     return
@@ -162,31 +218,65 @@ fetchNearestBusStops = (onSuccessCallback, onFailureCallback) ->
   navigator.geolocation.getCurrentPosition(locationQuerySucceeded, locationQueryFailed)
   return
 
-### Show bus stop list in UI ###
-showBusStops = (busStops, err) ->
-  $list = $(busStopsPageId + ' ul')
+### Show bus stop list in UI, actionType determines what happens after the busstop is selected 
+#    actionType is kutsuplusSend, kutsuplus or showBusstops
+###
+showBusStops = (busStops, err, actionType, kutsuplusDepartureStop) ->
+  if actionType == "kutsuplus" or actionType == "kutsuplusSend"
+    $list = $(kutsuplusPageId + ' ul')
+    if actionType == "kutsuplus"
+        $(kutsuplusPageHeaderId).text("Kutsuplus from: ")
+    else
+        $(kutsuplusPageHeaderId).text("Kutsuplus to: ")
+  else
+    $list = $(busStopsPageId + ' ul')
+  $list.off('click', 'li', onClickFunction) #This prevents recursion problem with namespaces
   $list.empty()
   if err?
     $list.append('<li>' + err +  '</li>')
   else
     if busStops?
       for i, busStop of busStops
-        $list.append("<li data-id='" + busStop.id + "'><a href='" + busStopInfoPageId + "'><img class='ui-li-icon' src='static/images/bus_stop_symbol.png' alt='(stop)' />" + busStop.name + " (" + busStop.code + ")</a></li>")
+        if actionType == "kutsuplus" or actionType == "kutsuplusSend"
+            refId = "#"
+        else
+            refId = busStopInfoPageId
+        $list.append("<li data-id='" + busStop.id + "' data-code= '" + busStop.code + "'><a href='" + refId + "'><img class='ui-li-icon' src='static/images/bus_stop_symbol.png' alt='(stop)' />" + busStop.name + " (" + busStop.code + ")</a></li>")
     else
       $list.append('<li>(No nearby bus stops found)</li>')
 
   $list.listview("refresh")
-
-  $list.on('click', 'li', () ->
+  onClickFunction =  () ->
     clickedBusStopId = $(this).attr('data-id')
+    clickedBusStopCode = $(this).attr('data-code')
     if clickedBusStopId?
-      $(busStopInfoPageHeaderId).text($(this).text())
-      busStopToShowId = clickedBusStopId
+      if actionType == "kutsuplus"
+        #Departure bus stop is selected
+        #Next, user will type destination address and select the nearest bus stop
+        destination_address = prompt("Please type your destination address")
+        getCoordinatesFromAddress(destination_address, (latitude, longitude) ->
+              fetchNearestBusStopsByCoordinates(latitude, longitude, (destinationBusStops) ->
+                  # provide list of bus stops in UI
+                  actionType = "kutsuplusSend"
+                  if destinationBusStops.length > 0
+                    kutsuplusDepartureStop = clickedBusStopCode
+                    showBusStops(destinationBusStops, null, actionType, kutsuplusDepartureStop)
+                  else
+                    showBusStops(null, null, actionType, kutsuplusDepartureStop)
+                  return      
+              )
+        )
+      else if actionType == "kutsuplusSend"
+        sendKutsuplusMessage(kutsuplusDepartureStop, clickedBusStopCode)
+        $.mobile.navigate("") # Navigate to front page
+      else
+        busStopToShowId = clickedBusStopId
+        $(busStopInfoPageHeaderId).text($(this).text())
     else
-      $(busStopInfoPageHeaderId).text("(none selected)")
-      busStopToShowId = ''
-  )
-
+      if not(actionType == "kutsuplus" or actionType == "kutsuplusSend")
+        $(busStopInfoPageHeaderId).text("(none selected)")
+        busStopToShowId = ''
+  $list.on('click', 'li', onClickFunction)
   return
 
 millisecondsToTimeString = (milliseconds) ->
@@ -216,16 +306,20 @@ millisecondsToTimeString = (milliseconds) ->
 ### Show Bus stop information in UI ###
 showBusStop = (busInfoList, err) ->
   if !busStopInfoPageVisible
+    console.log("no bus stop page visible when asked to show bus stops")
     return # user has navigate away from this page
 
+  defaultNoItemsRow = '<li style="background-color: black; color: white;">(no buses approaching)</li>'
   $list = $(busStopInfoPageId + ' ul')
   $list.empty()
   if err?
+    console.log("ERR: " + err)
     $list.append('<li>' + err +  '</li>')
   else
     if busInfoList?
-
+      count = 0
       for i, busInfo of busInfoList
+        console.log("BusInfo" + i + ": " + busInfo)
         data = busInfo["line"] + ': '
         busEnterTime = new Date(parseInt(busInfo["timeStamp"])*1000) # unix epoch to epoch
         currentTime = Date.now()
@@ -233,6 +327,7 @@ showBusStop = (busInfoList, err) ->
         if (difference < 0)
           difference = 0 # Show all buses that has past their expected time as 0 minutes
         else if (difference > busStopMaximumVisibleBusDelay)
+          console.log("BusInfo" + i + ": filtered based on time offset")
           continue # filter this info
         data += millisecondsToTimeString(Math.abs(difference))
 
@@ -240,8 +335,12 @@ showBusStop = (busInfoList, err) ->
           data += ' (real time)'
 
         $list.append('<li style="background-color: white;"><img class="ui-li-icon" src="static/images/bus.png" alt="(bus)" />' + data + '</li>')
+        count += 1
+
+      if count == 0
+        $list.append(defaultNoItemsRow)
     else
-      $list.append('<li style="background-color: white;">(no buses approaching)</li>')
+      $list.append(defaultNoItemsRow)
 
   $list.listview("refresh")
   return
@@ -249,17 +348,73 @@ showBusStop = (busInfoList, err) ->
 # Event happens when the user has selected a bus stop to show.
 $(busStopInfoPageId).bind 'pageinit', (e, data) ->
   console.log("busStopInfoPageId: pageinit")
-  $list = $(busStopsPageId + ' ul')
+  $list = $(busStopInfoPageId + ' ul')
   $list.empty()
   $list.listview()
   return
 
 $(busStopInfoPageId).bind 'pageshow', (e, data) ->
   console.log("busStopInfoPageId: pageshow")
+  
+  id = busStopToShowId
+
+  if (id? && id != '')
+    $list = $(busStopsPageId + ' ul')
+    $list.empty()
+
+    onBusStopClicked = (busStopId) ->
+      fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
+        # onSuccess
+        if busInfoList.length > 0
+          console.log(busInfoList.length + " buses approaching")
+          showBusStop(busInfoList, null)
+        else
+          showBusStop(null, null)
+        return
+      , (error) ->
+        # onError
+        showBusStop(null, error)
+        return
+      )
+      return
   busStopInfoPageVisible = true
 
-  refreshBusStopInfo() # fetch data once
-  startBusStopRefreshing() # Start periodic refreshing
+  # Clear list from existing info
+  $list = $(busStopInfoPageId + ' ul')
+  $list.empty()
+
+
+  # fetch data & start periodic refreshing task
+  refreshBusStopInfo()
+  startBusStopRefreshing()
+  return
+
+# Event happens when the user has selected a kutsuplus page to show.
+$(kutsuplusPageId).bind 'pageinit', (e, data) ->
+  $list = $(kutsuplusPageId + ' ul')
+  $list.empty()
+  $list.listview()
+  return
+  
+# Kutsuplus page
+$(kutsuplusPageId).bind 'pageshow', (e, data) ->
+  $list = $(kutsuplusPageId + ' ul')
+  $list.empty()
+  # Show nearby bus stops
+  console.log("bus stop page shown")
+  fetchNearestBusStops((busStops) ->
+      # provide list of bus stops in UI
+      if busStops.length > 0
+        showBusStops(busStops, null, "kutsuplus")
+      else
+        showBusStops(null, null, "kutsuplus")
+      return
+  , (errorMessage) ->
+    # onFailedCallback
+    console.log(errorMessage)
+    showBusStops(null, errorMessage, "kutsuplus")
+    return
+  )
   return
 
 $(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
@@ -267,51 +422,29 @@ $(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
   busStopInfoPageVisible = false
   stopBusStopRefreshing() # cancel periodic refreshing task
 
+
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
 # pageinit event happens before the pageshow event
 $(busStopsPageId).bind 'pageshow', (e, data) ->
   $list = $(busStopsPageId + ' ul')
-
+  $list.empty()
   # Show nearby bus stops
   console.log("bus stop page shown")
+  actionType = "showBuses"
   fetchNearestBusStops((busStops) ->
-    # onSuccessCallback
-    $list.empty()
-    # provide list of bus stops in UI
-    if busStops.length > 0
-      showBusStops(busStops, null)
-    else
-      showBusStops(null, null)
-
-    return
+      # provide list of bus stops in UI
+      if busStops.length > 0
+        showBusStops(busStops, null, actionType)
+      else
+        showBusStops(null, null, actionType)
+      return
   , (errorMessage) ->
     # onFailedCallback
     $list.empty()
     console.log(errorMessage)
-    showBusStops(null, errorMessage)
+    showBusStops(null, errorMessage, actionType)
     return
   )
-
-$('#kutsuplus-button').on "click", ->
-
-    failureFunction = (error) -> 
-        console.log("nearest Bus stop search failed. Error message: "+error)
-    console.log("Starting Kutsuplus functionality")
-    fetchNearestBusStops(showBusStops, failureFunction)
-
-    messageInfo =
-      phoneNumber: "+358440301091",
-      textMessage: "Ostan lipun"
-    confirmation = confirm("Do you want to order a Kutsuplus car? This costs up to 20 euros")
-    if confirmation
-        sms.sendMessage(messageInfo,
-          (message) ->
-            console.log("Kutsuplus ordered succesfully: " + message)
-          (error) ->
-            console.log("code: " + error.code + ", message: " + error.message)
-        )
-    else
-        console.log("SMS ticket purchase cancelled.")
 
 ###
    Fill bus estimations list for single bus stop
@@ -320,14 +453,9 @@ refreshBusStopInfo = () ->
   if busStopDataRefreshOngoing || !busStopInfoPageVisible
     return # allow only single execution at a time while page is visible
 
-  console.log("periodic bus stop info refresh...")
   busStopDataRefreshOngoing = true # prevent new refreshes while current refresh is ongoing
   id = busStopToShowId
   if (id? && id != '')
-    console.log("bus stop id: " + id)
-    $list = $(busStopsPageId + ' ul')
-    $list.empty()
-
     onBusStopClicked = (busStopId) ->
       fetchTimeEstimationsForBusStop(busStopId, (busInfoList) ->
 # onSuccess
@@ -350,6 +478,16 @@ refreshBusStopInfo = () ->
       return # user has navigated away from this page
     onBusStopClicked(id)
   return
+
+
+###
+  Helper function to show or hide ajax loading animation
+  call loading('show') or loading('hide') to change the loading status
+###
+loading = (showOrHide) ->
+  setTimeout(() ->
+    $.mobile.loading(showOrHide);
+  , 1)
 
 
 ###
