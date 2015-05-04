@@ -115,7 +115,7 @@
 				       <h3>Buy an internal Helsinki ticket </h3>
 					   <p>Buy a SMS ticket that can be used in Helsinki trains, metro and trams. The ticket costs 2 euros.</p>
                   </a> </li>
-                  <li><a href="#bus-stop-page" id="kutsuplus-button">
+                  <li><a href="#kutsuplus-page" id="kutsuplus-button">
 				       <h3>Order a Kutsuplus car </h3>
 					   <p>Orders a Kutsuplus car to a bus stop of your choosing</p>
                   </a> </li>
@@ -302,7 +302,7 @@
         <div id="kutsuplus-page" data-role="page" style="background-color: black;">
             <div data-role="header">
                 <a href="" data-rel="back">Back</a>
-                <h1>Select your starting point</h1>
+                <h1 id="kutsuplus-page-header">Kutsuplus from:</h1>
             </div>
             <div data-role="content">
                 <ul data-role="listview" style="margin-bottom: 0">
@@ -314,7 +314,7 @@
         <div id="bus-stop-info" data-role="page" style="background-color: black;">
             <div data-role="header">
                 <a href="" data-rel="back">Back</a>
-                <h1>Bus stop info</h1>
+                <h1 id="bus-stop-info-header">Bus stop info</h1>
             </div>
             <div data-role="content">
                 <ul data-role="listview" style="margin-bottom: 0">
@@ -441,8 +441,6 @@
         <script src="static/js/nearestmacaddress.js"></script>
         <!-- Handles buying the sms ticket -->
 		<script src="static/js/ticket.js"></script>
-         <!-- Handles buying the Kutsuplus tickets -->
-		<script src="static/js/kutsuplus.js"></script>
         <!-- Push disruptions notifications -->
         <script src="static/js/notification.js"></script>
         <!-- Used for geolocationing -->
