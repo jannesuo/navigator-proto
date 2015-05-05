@@ -18,8 +18,8 @@ $(document).on "deviceready", ->
   $('#ticket-button').on "click", ->
     confirmation = confirm("Do you want to buy a Helsinki internal SMS ticket? This costs 2 euros and is valid in Helsinki trains and trams.")
     messageInfo =
-      phoneNumber: "+358440301091",
-      textMessage: "Ostan lipun"
+      phoneNumber: citynavi.config.ticket_sms_number
+      textMessage: citynavi.config.ticket_sms_message
     
     if confirmation
         sms.sendMessage(messageInfo,

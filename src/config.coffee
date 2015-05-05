@@ -219,6 +219,8 @@ helsinki =
         ]
     autocompletion_providers: ["poi_categories", "history", "geocoder", "osm"]
     speech_language: "fi-FI"
+    ticket_sms_number: ""  # TODO: add the number
+    ticket_sms_message: "Ostan lipun"
 
 nl =
     name: "Netherlands"
