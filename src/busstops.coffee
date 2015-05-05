@@ -345,6 +345,13 @@ showBusStop = (busInfoList, err) ->
   $list.listview("refresh")
   return
 
+# Event happens when the user has parted awaay from bus stop info to show -page.
+$(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
+  busStopInfoPageVisible = false
+  stopBusStopRefreshing() # cancel periodic refreshing task
+  $list = $(busStopInfoPageId + ' ul') # clear list before navigating away
+  $list.empty()
+
 # Event happens when the user has selected a bus stop to show.
 $(busStopInfoPageId).bind 'pageinit', (e, data) ->
   console.log("busStopInfoPageId: pageinit")
@@ -417,11 +424,9 @@ $(kutsuplusPageId).bind 'pageshow', (e, data) ->
   )
   return
 
-$(busStopInfoPageId).bind 'pagebeforehide', (e, data) ->
-  console.log("busStopInfoPageId: pagebeforehide")
-  busStopInfoPageVisible = false
-  stopBusStopRefreshing() # cancel periodic refreshing task
-
+$(busStopsPageId).bind 'pagebeforehide', (e, data) ->
+  $list = $(busStopsPageId + ' ul') # clear list before navigating away
+  $list.empty()
 
 # Event happens when the user has selected the "bus stops nearby" link from the front page.
 # pageinit event happens before the pageshow event
