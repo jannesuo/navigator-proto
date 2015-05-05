@@ -29,6 +29,9 @@ grunt
 * Cordova plugin to add all dependencies [https://github.com/pekman/navigator-plugin]
 * Server component for push notifications [https://github.com/Mankro/navigator-push-server]
 
+# Demo video of some of the features
+* Youtube video: https://www.youtube.com/watch?v=zHRgK4Vl70Q
+
 
 # Terms of use
 All the source code in this repository that is not licensed by the fork source, is licensed with MIT open source license. The software code is provided "as is" and is free for use in any open source applications.
